@@ -4,10 +4,7 @@
 
 from __future__ import division
 import pkg_resources
-
-__all__ = [
-    'getResourcePath'
-    ]
+import types    
 
 
 def getResourcePath(name):
@@ -16,13 +13,10 @@ def getResourcePath(name):
     return pkg_resources.resource_filename(__name__, "data/%s" % name)
     
 
-def main():
+def isFunction(f):
     """
-    Main Function
+    Check if object is a function.
     """
 
-    pass
-
-
-if __name__ == '__main__':
-    main()
+    return isinstance(f, types.FunctionType) or isinstance(f, types.MethodType)
+    

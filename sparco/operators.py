@@ -9,13 +9,6 @@ import scipy as sp
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-__all__ = [
-    'opBlur',
-    'opWavelet',
-    'opDirac',
-    'opFoG'
-    ]
-
 
 class opBase(object):
     """

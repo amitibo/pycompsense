@@ -12,10 +12,6 @@ import os.path
 from .operators import *
 from .utils import *
 
-__all__ = [
-    'prob701'
-    ]
-
 
 class problemBase(object):
     """
