@@ -3,6 +3,7 @@ import numpy as np
 from ..utils import *
 import time
 
+EPS = finfo(float).eps
 
 def _softThreshold(x, threshold):
     """
@@ -393,7 +394,6 @@ def TwIST(
     if compute_mse:
         mses.append(np.sum((x-true_x)**2))
     
-    cont_outer = 1
     iter = 1
     if verbose:
         print '\nInitial objective = %10.6e,  nonzeros=%7d' % (prev_f, num_nz_x)
@@ -413,6 +413,7 @@ def TwIST(
     #--------------------------------------------------------------
     # TwIST iterations
     #--------------------------------------------------------------
+    cont_outer = True
     while cont_outer:
         #
         # gradient
@@ -429,9 +430,8 @@ def TwIST(
                 # suitable for sparse inducing priors
                 #
                 if sparse:
-                    mask = x != 0
-                    xm1 = xm1 * mask
-                    xm2 = xm2 * mask
+                    xm1[x == 0] = 0
+                    xm2[x == 0] = 0
                 
                 #
                 # two-step iteration
@@ -533,7 +533,7 @@ def TwIST(
         cont_outer = (iter <= maxiter) and (criterion > tolA)
         
         if iter <= miniter:
-            cont_outer = 1
+            cont_outer = True
 
         iter += 1
         prev_f = f
@@ -570,47 +570,109 @@ def TwIST(
         print 'CPU time so far = %10.3e' % times[-1]
     
     
-    # #%--------------------------------------------------------------
-    # #% If the 'Debias' option is set to 1, we try to
-    # #% remove the bias from the l1 penalty, by applying CG to the
-    # #% least-squares problem obtained by omitting the l1 term
-    # #% and fixing the zero coefficients at zero.
-    # #%--------------------------------------------------------------
-    # if debias:
-    #     if verbose:
-    #         fprintf(1., '\n')
-    #         fprintf(1., 'Starting the debiasing phase...\n\n')
+    #
+    #--------------------------------------------------------------
+    # If the 'Debias' option is set to 1, we try to
+    # remove the bias from the l1 penalty, by applying CG to the
+    # least-squares problem obtained by omitting the l1 term
+    # and fixing the zero coefficients at zero.
+    #--------------------------------------------------------------
+    #
+    if debias:
+        if verbose:
+            print '\nStarting the debiasing phase...\n'
+       
+        x_debias = x.copy()
+        debias_start = iter
         
+        #
+        # calculate initial residual
+        #
+        resid = A(x_debias)
+        resid = resid-y
+        rvec = AT(resid)
         
-    #     x_debias = x
-    #     zeroind = x_debias != 0.
-    #     cont_debias_cg = 1.
-    #     debias_start = iter
-    #     #% calculate initial residual
-    #     resid = A[int(x_debias)-1]
-    #     resid = resid-y
-    #     resid_prev = np.dot(finfo(float).eps, np.ones(matcompat.size(resid)))
-    #     rvec = AT[int(resid)-1]
-    #     #% mask out the zeros
-    #     rvec = rvec*zeroind
-    #     rTr_cg = np.dot(rvec.flatten(0).conj(), rvec.flatten(1))
-    #     #% set convergence threshold for the residual || RW x_debias - y ||_2
-    #     tol_debias = np.dot(tolD, np.dot(rvec.flatten(0).conj(), rvec.flatten(1)))
-    #     #% initialize pvec
-    #     pvec = -rvec
-    #     #% main loop
-    #     while cont_debias_cg:
-    #         #% calculate A*p = Wt * Rt * R * W * pvec
+        #
+        # mask out the zeros
+        #
+        zeroind = x_debias == 0
+        rvec[zeroind] = 0
+        rTr_cg = np.sum(rvec * rvec)
+        
+        #
+        # Set convergence threshold for the residual || RW x_debias - y ||_2
+        #
+        tol_debias = tolD * rTr_cg
+        
+        #
+        # initialize pvec
+        #
+        pvec = -rvec
+        
+        #
+        # main loop
+        #
+        cont_debias_cg = True
+        while cont_debias_cg:
+            #
+            # calculate A*p = Wt * Rt * R * W * pvec
+            #
+            RWpvec = A(pvec)
+            Apvec = AT(RWpvec)
+
+            #
+            # mask out the zero terms
+            #
+            Apvec[zeroind] = 0
+
+            #
+            # calculate alpha for CG
+            #
+            alpha_cg = rTr_cg / np.sum(pvec * Apvec)
+
+            #
+            # take the step
+            #
+            x_debias = x_debias + alpha_cg * pvec
+            resid = resid + alpha_cg * RWpvec
+            rvec  = rvec  + alpha_cg * Apvec
+
+            rTr_cg_plus = np.sum(rvec * rvec)
+            beta_cg = rTr_cg_plus / rTr_cg
+            pvec = -rvec + beta_cg * pvec
+
+            rTr_cg = rTr_cg_plus
+
+            iter += 1
+
+            objective.append(0.5*np.sum(resid * resid) + tau*phi_function(x_debias))
+            times.appebd(time.time() - t0)
+
+            if compute_mse:
+                err = true_x - x_debias
+                mses.append(np.sum(err * err))
+
+            #
+            # in the debiasing CG phase, always use convergence criterion
+            # based on the residual (this is standard for CG)
+            #
+            if verbose:
+                print ' Iter = %5d, debias resid = %13.8e, convergence = %8.3e\n' % \
+                      (iter, np.sum(resid * resid), rTr_cg / tol_debias)
+                
+            cont_debias_cg = \
+                (iter-debias_start <= miniter_debias ) or \
+                ((rTr_cg > tol_debias) and (iter-debias_start <= maxiter_debias))
+
+        if verbose:
+            print '\nFinished the debiasing phase!\nResults:'
+            print '||A x - y ||_2 = %10.3e' % np.sum(resid * resid)
+            print '||x||_1 = %10.3e' % np.sum(np.abs(x))
+            print 'Objective function = %10.3e' % f
             
-    #     if verbose:
-    #         fprintf(1., '\nFinished the debiasing phase!\nResults:\n')
-    #         fprintf(1., '||A x - y ||_2 = %10.3e\n', np.dot(resid.flatten(0).conj(), resid.flatten(1)))
-    #         fprintf(1., '||x||_1 = %10.3e\n', np.sum(np.abs(x.flatten(1))))
-    #         fprintf(1., 'Objective function = %10.3e\n', f)
-    #         nz = x_debias != 0.0
-    #         fprintf(1., 'Number of non-zero components = %d\n', np.sum(nz.flatten(1)))
-    #         fprintf(1., 'CPU time so far = %10.3e\n', times[int(iter)-1])
-    #         fprintf(1., '\n')
+            nz = x_debias != 0
+            print 'Number of non-zero components = %d' % np.sum(nz)
+            print 'CPU time so far = %10.3e\n' % times[-1]
 
     if compute_mse:
         mses = np.array(mses) / true_x.size
