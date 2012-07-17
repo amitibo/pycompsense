@@ -55,7 +55,7 @@ def main():
     # Solve an L1 recovery problem:
     # minimize  1/2|| Ax - b ||_2^2  +  tau ||x||_1
     #
-    x, dummy, obj, dummy, dummy = sparco.TwIST(
+    x, dummy, obj, times, dummy, mses, dummy = sparco.TwIST(
         P.b,
         P.A,
         tau,
@@ -76,36 +76,28 @@ def main():
     # Show results
     #
     plt.figure()
-    plt.imshow(yorig, cmap=cm.gray)
+    plt.imshow(yorig, cmap=cm.gray, origin='lower')
     plt.title('Original Image')
 
     plt.figure()
-    plt.imshow(b.reshape(P.signal_shape), cmap=cm.gray)
+    plt.imshow(b.reshape(P.signal_shape), cmap=cm.gray, origin='lower')
     plt.title('Blurred and Noisy Image')
     
     plt.figure()
-    plt.imshow(y, cmap=cm.gray)
+    plt.imshow(y, cmap=cm.gray, origin='lower')
     plt.title('Reconstructed Image')
     
-# % plot the evolution of the objective function
-#   h_fig=figure(4);
-#   set(h_fig,'Units','characters',...
-#         'Position',[100  0 100 30]);
-
-#   semilogy(time,obj,'LineWidth',2)
-#   title('Evolution of the objective function');  
-#   xlabel('CPU time (sec)');
-#   grid on
- 
-# % plot the evolution of the mse
-#   h_fig=figure(5);
-#   set(h_fig,'Units','characters',...
-#         'Position',[200  0 100 30]);
-
-#   semilogy(time,mse,'LineWidth',2)
-#   title('Evolution of the mse');  
-#   xlabel('CPU time (sec)');
-#   grid on
+    plt.figure()
+    plt.semilogy(times, obj, lw=2)
+    plt.title('Evolution of the objective function')
+    plt.xlabel('CPU time (sec)')
+    plt.grid(True)
+    
+    plt.figure()
+    plt.semilogy(times, mses, lw=2)
+    plt.title('Evolution of the mse')
+    plt.xlabel('CPU time (sec)')
+    plt.grid(True)
 
     plt.show()
 

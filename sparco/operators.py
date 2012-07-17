@@ -170,7 +170,6 @@ class opWavelet(opBase):
             nodes = wp.get_leaf_nodes(decompose=True)
             coeff = x.reshape([len(nodes)] + list(nodes[0].data.shape))
             for i, node in enumerate(nodes):
-                #node[node.path] = coeff[i]
                 node.data = coeff[i]
             y = wp.reconstruct().reshape((-1, 1))
 
@@ -183,8 +182,8 @@ class opDirac(opBase):
 
     opDirac(N) creates the identity operator for vectors of length N. 
 
-%   Copyright 2008, Ewout van den Berg and Michael P. Friedlander
-%   http://www.cs.ubc.ca/labs/scl/sparco
+    Copyright 2008, Ewout van den Berg and Michael P. Friedlander
+    http://www.cs.ubc.ca/labs/scl/sparco
     """
 
     def __init__(self, n):

@@ -1,6 +1,8 @@
 from __future__ import division
 import numpy as np
 from ..utils import *
+import time
+
 
 def _softThreshold(x, threshold):
     """
@@ -21,7 +23,7 @@ def TwIST(
         y,
         A,
         tau,
-        psi_function=_softThreshold,
+        psi_function=None,
         phi_function=None,
         lam1=1e-4,
         alpha=0,
@@ -237,7 +239,7 @@ def TwIST(
                      phase started. If no debiasing took place,
                      this variable is returned as zero.
     
-      mses = sequence of MSE values, with respect to True_x,
+      mses = sequence of MSE values, with respect to true_x,
              if it was given; if it was not given, mses is empty,
              mses = [].
     
@@ -247,17 +249,6 @@ def TwIST(
     ========================================================
     """
     
-    compute_mse = 0
-    plot_ISNR = 0
-    phi_l1 = 0
-    psi_ok = 0
-    lamN = 1
-    
-    # 
-    # constants and internal variables
-    #
-    for_ever = 1
-
     #
     # maj_max_sv: majorizer for the maximum singular value of operator A
     #
@@ -267,12 +258,13 @@ def TwIST(
     # Set the defaults for outputs that may not be computed
     #
     debias_start = 0
-    x_debias = np.array([])
-    mses = np.array([])
+    x_debias = []
+    mses = []
     
     #
     # twist parameters
     #                
+    lamN = 1
     rho0 = (1-lam1/lamN) / (1+lam1/lamN)
     
     if alpha == 0:
@@ -306,11 +298,17 @@ def TwIST(
     Aty = AT(y)
 
     #
+    # If no psi and phi were given, simply use the l1 norm.
     #
-    #
+    psi_soft = False
+    if psi_function == None:
+        psi_function = _softThreshold
+        psi_soft = True
+
+    phi_l1 = False
     if phi_function == None:
         phi_function = lambda x: np.sum(np.abs(x))
-        phi_l1 = 1
+        phi_l1 = True
         
     #--------------------------------------------------------------
     # Initialization
@@ -348,9 +346,13 @@ def TwIST(
     #
     # if the true x was given, check its size
     #
-    #if np.logical_and(compute_mse, matcompat.size(true) != matcompat.size(x)):
-    #    matcompat.error(np.array(np.hstack(('Initial x has incompatible size'))))
-    
+    compute_mse = False
+    plot_ISNR = False
+    if true_x != None:
+        if true_x.size != x.size:
+            raise Exception('Initial x has incompatible size')
+        compute_mse = True
+        plot_ISNR = True
     
     #
     # if tau is large enough, in the case of phi = l1, thus psi = soft,
@@ -359,15 +361,15 @@ def TwIST(
     if phi_l1:
         max_tau = np.max(np.abs(Aty))
         
-        if tau >= max_tau and psi_ok == 0:
+        if tau >= max_tau and psi_soft:
             x = np.zeros(Aty.shape)
             objective = [0.5*np.sum(y * y)]
             times = [0]
             
-            # if compute_mse:
-            #     mses[0] = np.sum((true.flatten(1)**2.))
+            if compute_mse:
+                mses.append(np.sum((true_x**2)))
             
-            return x, x_debias, objective, debias_start, max_svd
+            return x, x_debias, objective, times, debias_start, mses, max_svd
 
     #
     # define the indicator vector or matrix of nonzeros in x
@@ -382,13 +384,14 @@ def TwIST(
     prev_f = 0.5*np.sum(resid * resid) + tau*phi_function(x)
 
     #
-    #% start the clock
-    # t0 = cputime
-    # times[0] = cputime-t0
+    # start the clock
+    #
+    t0 = time.time()
+    times = [0]
     objective = [prev_f]
     
-    # if compute_mse:
-    #     mses[0] = np.sum(np.sum(((x-true)**2.)))
+    if compute_mse:
+        mses.append(np.sum((x-true_x)**2))
     
     cont_outer = 1
     iter = 1
@@ -532,29 +535,26 @@ def TwIST(
         if iter <= miniter:
             cont_outer = 1
 
-        iter += iter
+        iter += 1
         prev_f = f
         objective.append(f)
         
-        # times(iter) = cputime-t0;
+        times.append(time.time()-t0)
 
-        # if compute_mse
-        #     err = true - x;
-        #     mses(iter) = (err(:)'*err(:));
-        # end
+        if compute_mse:
+            err = true_x - x
+            mses.append(np.sum(err*err))
 
-        # % print out the various stopping criteria
-        # if verbose
-        #     if plot_ISNR
-        #         fprintf(1,'Iteration=%4d, ISNR=%4.5e  objective=%9.5e, nz=%7d, criterion=%7.3e\n',...
-        #             iter, 10*log10(sum((y(:)-true(:)).^2)/sum((x(:)-true(:)).^2) ), ...
-        #             f, num_nz_x, criterion/tolA);
-        #     else
-        #         fprintf(1,'Iteration=%4d, objective=%9.5e, nz=%7d,  criterion=%7.3e\n',...
-        #             iter, f, num_nz_x, criterion/tolA);
-        #     end
-        # end
-            
+        #
+        # Print out the various stopping criteria
+        #
+        if verbose:
+            if plot_ISNR:
+                print 'Iteration=%4d, ISNR=%4.5e  objective=%9.5e, nz=%7d, criterion=%7.3e' % \
+                      (iter, 10*np.log10(np.sum((y-true_x)**2)/np.sum((x-true_x)**2)), f, num_nz_x, criterion/tolA)
+            else:
+                print 'Iteration=%4d, objective=%9.5e, nz=%7d,  criterion=%7.3e' % (iter, f, num_nz_x, criterion/tolA)
+    
     #
     #--------------------------------------------------------------
     # end of the main loop
@@ -567,7 +567,7 @@ def TwIST(
         print '||x||_1 = %10.3e' % np.sum(np.abs(x))
         print 'Objective function = %10.3e' % f
         print 'Number of non-zero components = %d' % num_nz_x
-        # print 'CPU time so far = %10.3e' % times[int(iter)-1]
+        print 'CPU time so far = %10.3e' % times[-1]
     
     
     # #%--------------------------------------------------------------
@@ -612,8 +612,8 @@ def TwIST(
     #         fprintf(1., 'CPU time so far = %10.3e\n', times[int(iter)-1])
     #         fprintf(1., '\n')
 
-    # if compute_mse:
-    #     mses = matdiv(mses, length(true.flatten(1)))
+    if compute_mse:
+        mses = np.array(mses) / true_x.size
     
-    return x, x_debias, objective, debias_start, max_svd
+    return x, x_debias, objective, times, debias_start, mses, max_svd
 
