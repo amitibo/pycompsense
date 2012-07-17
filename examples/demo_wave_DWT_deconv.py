@@ -64,39 +64,29 @@ def main():
         stop_criterion=1,
         tolA=1e-3
         )
+
+    #
+    # The solution x is the reconstructed signal in the sparsity basis.
+    # Use the function handle P.reconstruct to use the coefficients in
+    # x to reconstruct the original signal.
+    #
+    y  = P.reconstruct(x)
+
+    #
+    # Show results
+    #
+    plt.figure()
+    plt.imshow(yorig, cmap=cm.gray)
+    plt.title('Original Image')
+
+    plt.figure()
+    plt.imshow(b.reshape(P.signal_shape), cmap=cm.gray)
+    plt.title('Blurred and Noisy Image')
     
-
-
-  
-# % The solution x is the reconstructed signal in the sparsity basis. 
-# % Use the function handle P.reconstruct to use the coefficients in
-# % x to reconstruct the original signal.
-#   y     = P.reconstruct(x);    % Use x to reconstruct the signal.
-
-  
-#   h_fig=figure(1);
-#   set(h_fig,'Units','characters',...
-#         'Position',[0 35 100 30]);
-#   imagesc(yorig)
-#   title('Original image');
-#   colormap gray;
- 
-
-#   h_fig=figure(2);
-#   set(h_fig,'Units','characters',...
-#         'Position',[100 35 100 30]);
-#   imagesc(reshape(b,P.signalSize))
-#   title('Blurred and noisy image');
-#   colormap gray;
-
-#   h_fig=figure(3);
-#   set(h_fig,'Units','characters',...
-#         'Position',[0 0 100 30]);
-#   imagesc(y)
-#   title('Reconstructed image');
-#   colormap gray;
-
-
+    plt.figure()
+    plt.imshow(y, cmap=cm.gray)
+    plt.title('Reconstructed Image')
+    
 # % plot the evolution of the objective function
 #   h_fig=figure(4);
 #   set(h_fig,'Units','characters',...
@@ -117,6 +107,7 @@ def main():
 #   xlabel('CPU time (sec)');
 #   grid on
 
+    plt.show()
 
 if __name__ == '__main__':
     main()

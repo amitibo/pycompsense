@@ -410,7 +410,6 @@ def TwIST(
     #--------------------------------------------------------------
     # TwIST iterations
     #--------------------------------------------------------------
-    import ipdb; ipdb.set_trace()
     while cont_outer:
         #
         # gradient

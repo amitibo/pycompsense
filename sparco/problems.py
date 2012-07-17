@@ -18,16 +18,22 @@ class problemBase(object):
     Base class for all problems.
     """
 
-    def __init__(self, noseed):
+    def __init__(self, name, noseed):
         """
         """
 
+        self._name = name
+        
         #
         # Initialize random number generators
         #
         if not noseed:
             np.random.seed(seed=0)
 
+    @property
+    def name(self):
+        return self._name
+        
     @property
     def A(self):
         return self._A
@@ -100,11 +106,13 @@ class problemBase(object):
                 raise Exception('At least one of the fields signal or signalSize must be given.')
             self._signal_shape = self._signal.shape
 
-    def reconstruct(x):
+    def reconstruct(self, x):
         """Reconstruct signal from sparse coefficients"""
         
         y = self._B(x).reshape(self._signal_shape)
 
+        return y
+    
 
 class prob701(problemBase):
     """
@@ -143,14 +151,12 @@ class prob701(problemBase):
 
     def __init__(self, sigma=np.sqrt(2)/256, noseed=False):
         
-        super(prob701, self).__init__(noseed)
-        
+        super(prob701, self).__init__(name='blurrycam', noseed=noseed)
 
         #
         # Parse parameters and set problem name
         #
         self._sigma = sigma
-        self._name = 'blurrycam'
 
         #
         # Set up the data

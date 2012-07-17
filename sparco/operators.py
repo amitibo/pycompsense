@@ -156,17 +156,23 @@ class opWavelet(opBase):
         self._level = levels
         
     def __call__(self, x):
-
+        
         import pywt
-
-        pywt.wavedec2
 
         self._checkDimensions(x)
 
         if self._conj:
-            y = pywt.wavedec2(x.reshape(self._signal_shape), self._wavelet, level=self._level)
+            wp = pywt.WaveletPacket2D(data=x.reshape(self._signal_shape), wavelet=self._wavelet, maxlevel=self._level)
+            coeff = [n.data for n in wp.get_leaf_nodes(decompose=True)]
+            y = np.array(coeff).reshape((-1, 1))
         else:
-            y = pywt.waverec2(x.reshape(self._signal_shape), self._wavelet)
+            wp = pywt.WaveletPacket2D(data=np.zeros(self._signal_shape), wavelet=self._wavelet, maxlevel=self._level)
+            nodes = wp.get_leaf_nodes(decompose=True)
+            coeff = x.reshape([len(nodes)] + list(nodes[0].data.shape))
+            for i, node in enumerate(nodes):
+                #node[node.path] = coeff[i]
+                node.data = coeff[i]
+            y = wp.reconstruct().reshape((-1, 1))
 
         return y
 
@@ -228,17 +234,17 @@ class opFoG(opBase):
         super(opFoG, self).__init__(name='FoG', shape=(m, n))
         self._operators_list = operators_list
 
-    def __call__(x):
+    def __call__(self, x):
 
         self._checkDimensions(x)
 
         if self._conj:
-            y = operators_list[0].T(x)
-            for oper in operators_list[1:]:
+            y = self._operators_list[0].T(x)
+            for oper in self._operators_list[1:]:
                 y = oper.T(y)
         else:
-            y = operators_list[-1](x)
-            for oper in operators_list[-2::-1]:
+            y = self._operators_list[-1](x)
+            for oper in self._operators_list[-2::-1]:
                 y = oper(y)
 
         return y

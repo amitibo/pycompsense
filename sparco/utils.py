@@ -18,5 +18,5 @@ def isFunction(f):
     Check if object is a function.
     """
 
-    return isinstance(f, types.FunctionType) or isinstance(f, types.MethodType)
+    return isinstance(f, types.FunctionType) or isinstance(f, types.MethodType) or hasattr(f, '__call__')
     
