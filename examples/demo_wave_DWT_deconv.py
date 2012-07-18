@@ -31,7 +31,9 @@ import matplotlib.cm as cm
 import sparco
 
 
-def main():
+PROFILE = False
+
+def main(plot_results=False):
     """
     Main Function
     """
@@ -72,6 +74,9 @@ def main():
     #
     y  = P.reconstruct(x)
 
+    if not plot_results:
+        return
+    
     #
     # Show results
     #
@@ -101,5 +106,18 @@ def main():
 
     plt.show()
 
+    
 if __name__ == '__main__':
-    main()
+    
+    if PROFILE:
+        import hotshot, hotshot.stats
+        
+        prof = hotshot.Profile("stones.prof")
+        prof.runcall(main)
+        prof.close()
+        stats = hotshot.stats.load("stones.prof")
+        stats.strip_dirs()
+        stats.sort_stats('time', 'calls')
+        stats.print_stats(20)
+    else:
+        main(True)

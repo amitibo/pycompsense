@@ -155,6 +155,13 @@ class opWavelet(opBase):
 
         self._level = levels
         
+        #
+        # Create a reusable reconstruction tree
+        #
+        import pywt
+        self._wp = pywt.WaveletPacket2D(data=np.ones(self._signal_shape), wavelet=self._wavelet, maxlevel=self._level)
+        self._leaf_nodes = self._wp.get_leaf_nodes(decompose=True)
+        
     def __call__(self, x):
         
         import pywt
@@ -166,12 +173,10 @@ class opWavelet(opBase):
             coeff = [n.data for n in wp.get_leaf_nodes(decompose=True)]
             y = np.array(coeff).reshape((-1, 1))
         else:
-            wp = pywt.WaveletPacket2D(data=np.zeros(self._signal_shape), wavelet=self._wavelet, maxlevel=self._level)
-            nodes = wp.get_leaf_nodes(decompose=True)
-            coeff = x.reshape([len(nodes)] + list(nodes[0].data.shape))
-            for i, node in enumerate(nodes):
+            coeff = x.reshape([len(self._leaf_nodes)] + list(self._leaf_nodes[0].data.shape))
+            for i, node in enumerate(self._leaf_nodes):
                 node.data = coeff[i]
-            y = wp.reconstruct().reshape((-1, 1))
+            y = self._wp.reconstruct(update=False).reshape((-1, 1))
 
         return y
 

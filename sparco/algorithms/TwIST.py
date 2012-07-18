@@ -3,7 +3,7 @@ import numpy as np
 from ..utils import *
 import time
 
-EPS = finfo(float).eps
+EPS = np.finfo(float).eps
 
 def _softThreshold(x, threshold):
     """
