@@ -1,3 +1,58 @@
+"""
+*****
+TwIST
+*****
+
+Two-step Iterative Shrinkage/Thresholding Algorithm for Linear Inverse Problems.
+Solves the regularization problem 
+
+.. math::
+
+    arg min_x = 0.5*|| y - A x ||_2^2 + tau phi( x ), 
+
+where A is a generic matrix and phi(.) is a regularizarion 
+function  such that the solution of the denoising problem 
+
+.. math::
+
+    Psi_tau(y) = arg min_x = 0.5*|| y - x ||_2^2 + tau \phi( x ), 
+
+is known. 
+
+For further details about the TwIST algorithm, see the paper:
+
+.. [1]
+    J. Bioucas-Dias and M. Figueiredo, "A New TwIST: Two-Step
+    Iterative Shrinkage/Thresholding Algorithms for Image 
+    Restoration",  IEEE Transactions on Image processing, 2007.
+
+and
+
+.. [2]
+    J. Bioucas-Dias and M. Figueiredo, "A Monotonic Two-Step 
+    Algorithm for Compressive Sensing and Other Ill-Posed 
+    Inverse Problems", submitted, 2007.
+
+The python implementation is based on the Matlab implemebtation
+by: Jose Bioucas-Dias and Mario Figueiredo, October, 2007.
+
+-----------------------------------------------------------------------
+Copyright (2007): Jose Bioucas-Dias and Mario Figueiredo
+
+TwIST is distributed under the terms of 
+the GNU General Public License 2.0.
+
+Permission to use, copy, modify, and distribute this software for
+any purpose without fee is hereby granted, provided that this entire
+notice is included in all copies of any software which is or includes
+a copy or modification of this software and in all copies of the
+supporting documentation for such software.
+This software is being provided "as is", without any express or
+implied warranty.  In particular, the authors do not make any
+representation or warranty of any kind concerning the merchantability
+of this software or its fitness for any particular purpose.
+"""
+
 from __future__ import division
 import numpy as np
 from ..utils import *
@@ -45,209 +100,186 @@ def TwIST(
         verbose=True
         ):
     """
-    This function solves the regularization problem 
+    Solves the regularization problem 
+    
+    .. math::
     
         arg min_x = 0.5*|| y - A x ||_2^2 + tau phi( x ), 
     
     where A is a generic matrix and phi(.) is a regularizarion 
     function  such that the solution of the denoising problem 
     
+    .. math::
+    
         Psi_tau(y) = arg min_x = 0.5*|| y - x ||_2^2 + tau \phi( x ), 
     
     is known. 
     
-    For further details about the TwIST algorithm, see the paper:
+    Parameters
+    ----------
     
-    J. Bioucas-Dias and M. Figueiredo, "A New TwIST: Two-Step
-    Iterative Shrinkage/Thresholding Algorithms for Image 
-    Restoration",  IEEE Transactions on Image processing, 2007.
-    
-    and
-    
-    J. Bioucas-Dias and M. Figueiredo, "A Monotonic Two-Step 
-    Algorithm for Compressive Sensing and Other Ill-Posed 
-    Inverse Problems", submitted, 2007.
-    
-    Authors: Jose Bioucas-Dias and Mario Figueiredo, October, 2007.
-    
-    Please check for the latest version of the code and papers at
-    www.lx.it.pt/~bioucas/TwIST
-    
-    -----------------------------------------------------------------------
-    Copyright (2007): Jose Bioucas-Dias and Mario Figueiredo
-    
-    TwIST is distributed under the terms of 
-    the GNU General Public License 2.0.
-    
-    Permission to use, copy, modify, and distribute this software for
-    any purpose without fee is hereby granted, provided that this entire
-    notice is included in all copies of any software which is or includes
-    a copy or modification of this software and in all copies of the
-    supporting documentation for such software.
-    This software is being provided "as is", without any express or
-    implied warranty.  In particular, the authors do not make any
-    representation or warranty of any kind concerning the merchantability
-    of this software or its fitness for any particular purpose."
-    ----------------------------------------------------------------------
-    
-     ===== Required inputs =============
-    
-     y: 1D vector or 2D array (image) of observations
+    y : array,
+       1D vector or 2D array (image) of observations.
         
-     A: if y and x are both 1D vectors, A can be a 
+    A : {array, function handle},
+        if y and x are both 1D vectors, :math:`A` can be a 
         k*n (where k is the size of y and n the size of x)
         matrix or a handle to a function that computes
-        products of the form A*v, for some vector v.
+        products of the form :math:`Av`, for some vector v.
         In any other case (if y and/or x are 2D arrays), 
         A has to be passed as a handle to a function which computes 
-        products of the form A*x; another handle to a function 
-        AT which computes products of the form A'*x is also required 
+        products of the form :math:`Ax`; another handle to a function 
+        AT which computes products of the form :math:`A^Tx` is also required 
         in this case. The size of x is determined as the size
         of the result of applying AT.
-    
-     tau: regularization parameter, usually a non-negative real 
-          parameter of the objective  function (see above). 
+   
+    tau : float,
+        regularization parameter, usually a non-negative real
+        parameter of the objective function (see above).
      
+    psi_function : function handle, optional 
+        handle to denoising function (the default is soft threshold)
     
-     ===== Optional inputs =============
-     
-     'psi_function' = denoising function handle; handle to denoising function
-             Default = soft threshold.
+    phi_function : function handle, optional
+        handle to regularizer needed to compute the objective function.
+        (the default = ||x||_1)
     
-     'phi_function' = function handle to regularizer needed to compute the objective
-             function.
-             Default = ||x||_1
+    lam1 : float, optional (default=0.04)
+       parameter of the  TwIST algorithm:
+       Optimal choice: lam1 = min eigenvalue of ::math:`A^T*A`.
+       If min eigenvalue of :math:`A^T*A = 0`, or unknwon,  
+       set lam1 to a value much smaller than 1.
+       Rule of Thumb:
+       
+       * lam1=1e-4 for severyly ill-conditioned problems
+       * lam1=1e-2 for mildly  ill-conditioned problems
+       * lam1=1    for A unitary direct operators    
     
-     'lam1' = lam1 parameters of the  TwIST algorithm:
-              Optimal choice: lam1 = min eigenvalue of A'*A.
-              If min eigenvalue of A'*A == 0, or unknwon,  
-              set lam1 to a value much smaller than 1.
-    
-              Rule of Thumb: 
-                  lam1=1e-4 for severyly ill-conditioned problems
-                  lam1=1e-2 for mildly  ill-conditioned problems
-                  lam1=1    for A unitary direct operators
-    
-              Default: lam1 = 0.04.
-    
-              Important Note: If (max eigenvalue of A'*A) > 1,
+       .. note:: If (max eigenvalue of ::math:`A^T*A`) > 1,
               the algorithm may diverge. This is  be avoided 
               by taking one of the follwoing  measures:
     
-                 1) Set 'Monontone' = 1 (default)
-                   
-                 2) Solve the equivalenve minimization problem
+              1. Set enforce_monotone=True (default)
+              2. Solve the equivalenve minimization problem
     
-              min_x = 0.5*|| (y/c) - (A/c) x ||_2^2 + (tau/c^2) \phi( x ), 
+              .. math:
+              
+                  min_x = 0.5*|| (y/c) - (A/c) x ||_2^2 + (tau/c^2) \phi( x ), 
     
-              where c > 0 ensures that  max eigenvalue of (A'A/c^2) <= 1.
+              where c > 0 ensures that  max eigenvalue of ::math:`(A^TA/c^2) \leq 1`.
     
-     'alpha' = parameter alpha of TwIST (see ex. (22) of the paper)         
-              Default alpha = alpha(lamN=1, lam1)
+    alpha : float, optional (default=calculated as function of lam1)
+        parameter alpha of TwIST (see ex. (22) of the paper)         
       
-     'beta' = parameter beta of twist (see ex. (23) of the paper)
-              Default beta = beta(lamN=1, lam1)            
+    beta : float, optional (default=calculated as function of lam1)
+        parameter beta of twist (see ex. (23) of the paper)
     
-     'AT'    = function handle for the function that implements
-               the multiplication by the conjugate of A, when A
-               is a function handle. 
-               If A is an array, AT is ignored.
+    AT : function handle, optional
+        function that implements the multiplication by the conjugate
+        of A, when A is a function handle. If A is an array, AT is ignored.
     
-     'stop_criterion' = type of stopping criterion to use
-                       0 = algorithm stops when the relative 
-                           change in the number of non-zero 
-                           components of the estimate falls 
-                           below 'ToleranceA'
-                       1 = stop when the relative 
-                           change in the objective function 
-                           falls below 'ToleranceA'
-                       2 = stop when the relative norm of the difference between 
-                           two consecutive estimates falls below toleranceA
-                       3 = stop when the objective function 
-                           becomes equal or less than toleranceA.
-                       Default = 1.
+    stop_criterion : {0, 1, 2, 3}, optional (default=0)
+        type of stopping criterion to use
+            0 = algorithm stops when the relative 
+                change in the number of non-zero 
+                components of the estimate falls 
+                below tolA
+            1 = stop when the relative 
+                change in the objective function 
+                falls below tolA
+            2 = stop when the relative norm of the difference between 
+                two consecutive estimates falls below toleranceA
+            3 = stop when the objective function 
+                becomes equal or less than toleranceA.
     
-     'tolA' = stopping threshold; Default = 0.01
+    tolA : float, optional (default=0.01)
+        stopping threshold.
     
-     'debias'     = debiasing option: 1 = yes, 0 = no.
-                    Default = 0.
+    debias : bool, optional (default=False)
+        debiasing option
+        
+        .. note:: Debiasing is an operation aimed at the 
+            computing the solution of the LS problem 
+
+            .. math::
+              
+                arg min_x = 0.5*|| y - A^T x ||_2^2 
+    
+            where ::math:`A^T` is the  submatrix of A obatained by
+            deleting the columns of A corresponding of components
+            of x set to zero by the TwIST algorithm
                     
-                    Note: Debiasing is an operation aimed at the 
-                    computing the solution of the LS problem 
     
-                            arg min_x = 0.5*|| y - A' x' ||_2^2 
+    tolD : float, optional (default=0.0001)
+        stopping threshold for the debiasing phase.
+        If no debiasing takes place, this parameter, is ignored.
     
-                    where A' is the  submatrix of A obatained by
-                    deleting the columns of A corresponding of components
-                    of x set to zero by the TwIST algorithm
-                    
+    maxiter : int, optional (default=1000)
+        maximum number of iterations allowed in the
+        main phase of the algorithm.
     
-     'tolD' = stopping threshold for the debiasing phase:
-                    Default = 0.0001.
-                    If no debiasing takes place, this parameter,
-                    if present, is ignored.
+    miniter : int, optional (default=5)
+        minimum number of iterations performed in the
+        main phase of the algorithm.
     
-     'maxiter' = maximum number of iterations allowed in the
-                  main phase of the algorithm.
-                  Default = 1000
+    maxiter_debias : int, optional (default=5)
+        maximum number of iterations allowed in the
+        debising phase of the algorithm.
     
-     'miniter' = minimum number of iterations performed in the
-                  main phase of the algorithm.
-                  Default = 5
+    miniter_debias : int, optional (default=5)
+        minimum number of iterations to perform in the
+        debiasing phase of the algorithm.
     
-     'maxiter_debias' = maximum number of iterations allowed in the
-                  debising phase of the algorithm.
-                  Default = 200
+    init : {0, 1, 2, array}, optional (default=0)must be one of 
+        0 -> Initialization at zero. 
+        1 -> Random initialization.
+        2 -> initialization with ::math:`A^Ty`.
+        array -> initialization provided by the user.
     
-     'miniter_debias' = minimum number of iterations to perform in the
-                  debiasing phase of the algorithm.
-                  Default = 5
+    enforce_monotone : bool, optional (default=True)
+        enforce monotonic decrease in f. 
     
-     'init' must be one of {0,1,2,array}
-                  0 -> Initialization at zero. 
-                  1 -> Random initialization.
-                  2 -> initialization with A'*y.
-                  array -> initialization provided by the user.
-                  Default = 0;
-    
-     'enforce_monotone' = enforce monotonic decrease in f. 
-                  True -> enforce monotonicity
-                  False -> don't enforce monotonicity.
-                  Default = True;
-    
-     'sparse'   = Accelarates the convergence rate when the regularizer 
-                  Phi(x) is sparse inducing, such as ||x||_1.
-                  Default = True
+    sparse : bool, optional (default=True)
+        Accelarates the convergence rate when the regularizer 
+        Phi(x) is sparse inducing, such as ::math:`||x||_1`.
                   
-     'true_x' = if the true underlying x is passed in 
-                   this argument, MSE evolution is computed
+    true_x : array, optional (default=None)
+        if the true underlying x is passed in this argument,
+        MSE evolution is computed
     
-     'Verbose'  = work silently (0) or verbosely (1)
+    Verbose : bool, optional (default=False)
+        work silently (False) or verbosely (True) (default 
     
-    ===================================================  
-    ============ Outputs ==============================
-      x = solution of the main algorithm
+
+    Returns
+    -------
+    x : array,
+        solution of the main algorithm
     
-      x_debias = solution after the debiasing phase;
-                     if no debiasing phase took place, this
-                     variable is empty, x_debias = [].
+    x_debias : array,
+        solution after the debiasing phase;
+        if no debiasing phase took place, this
+        variable is [].
     
-      objective = sequence of values of the objective function
+    objective : array,
+        sequence of values of the objective function
     
-      times = CPU time after each iteration
+    times : arraym
+        CPU time after each iteration
     
-      debias_start = iteration number at which the debiasing 
-                     phase started. If no debiasing took place,
-                     this variable is returned as zero.
+    debias_start : int,
+        iteration number at which the debiasing 
+        phase started. If no debiasing took place,
+        this variable is returned as zero.
     
-      mses = sequence of MSE values, with respect to true_x,
-             if it was given; if it was not given, mses is empty,
-             mses = [].
+    mses : array,
+        sequence of MSE values, with respect to true_x,
+        if it was given; if it was not given, mses is [].
     
-      max_svd = inverse of the scaling factor, determined by TwIST,
-                applied to the direct operator (A/max_svd) such that
-                every IST step is increasing.
-    ========================================================
+    max_svd : float,
+        inverse of the scaling factor, determined by TwIST,
+        applied to the direct operator (A/max_svd) such that
+        every IST step is increasing.
     """
     
     #

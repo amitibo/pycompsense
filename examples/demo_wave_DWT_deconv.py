@@ -28,7 +28,7 @@ import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import sparco
+import compsense
 
 
 PROFILE = False
@@ -41,7 +41,7 @@ def main(plot_results=False):
     #
     # Generate environment
     #
-    P = sparco.prob701(sigma=1e-3)
+    P = compsense.problems.prob701(sigma=1e-3)
   
     yorig = P.signal
     b  = P.b
@@ -57,7 +57,7 @@ def main(plot_results=False):
     # Solve an L1 recovery problem:
     # minimize  1/2|| Ax - b ||_2^2  +  tau ||x||_1
     #
-    x, dummy, obj, times, dummy, mses, dummy = sparco.TwIST(
+    x, dummy, obj, times, dummy, mses, dummy = compsense.algorithms.TwIST(
         P.b,
         P.A,
         tau,

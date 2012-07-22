@@ -5,9 +5,6 @@ Operators relating to the sparse problems.
 from __future__ import division
 import numpy as np
 import numpy.fft as npfft
-import scipy as sp
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 
 
 class opBase(object):

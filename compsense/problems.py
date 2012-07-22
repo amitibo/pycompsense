@@ -4,11 +4,6 @@ Sparse problems
 
 from __future__ import division
 import numpy as np
-import scipy as sp
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import os
-import os.path
 from .operators import *
 from .utils import *
 
@@ -161,6 +156,7 @@ class prob701(problemBase):
         #
         # Set up the data
         #
+        import matplotlib.pyplot as plt        
         signal = plt.imread(getResourcePath("/prob701_Camera.tif"))
         m, n = signal.shape
 
