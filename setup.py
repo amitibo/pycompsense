@@ -9,7 +9,7 @@ def main():
     setup(
         name='compsense',
         version='0.1',
-        description='A toolbox for testing sparse reconstruction algorithms',
+        description='A toolbox for compressed sensing and sparse reconstruction algorithms',
         author='Amit Aides',
         author_email='amitibo@tx.technion.ac.il',
         packages=['compsense'],
