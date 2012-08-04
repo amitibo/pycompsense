@@ -10,11 +10,29 @@ from .utils import *
 
 class problemBase(object):
     """
-    Base class for all problems.
+    Base class for all CS problems. The problems follow
+    the quation below:
+    
+    .. math::
+    
+        A x = b
+        A = M B
+    
+    where :math:`A` is an operator acting on a sparse signal :math:`x`
+    and :math:`b` is the observation vector. :math:`A` can be factored
+    into :math:`M` which represents the system response and :math:`B`
+    basis that sparsifies the signal.
     """
 
-    def __init__(self, name, noseed):
+    def __init__(self, name, noseed=False):
         """
+        Parameters
+        ----------
+        name : str
+            Name of the problem
+            
+        noseed: Boolean, optional (default=False)
+            When False, the random seed is reset to 0.
         """
 
         self._name = name
@@ -27,35 +45,41 @@ class problemBase(object):
 
     @property
     def name(self):
+        """Name of the problem"""
         return self._name
         
     @property
     def A(self):
+        """Response of the problem"""
         return self._A
         
     @property
     def M(self):
+        """Sampling matrix"""
         return self._M
         
     @property
     def B(self):
+        """Base matrix"""
         return self._B
         
     @property
     def b(self):
+        """Observation vector"""
         return self._b
         
     @property
     def signal(self):
+        """Signal in original basis (Not in sparse basis)"""
         return self._signal
         
     @property
     def signal_shape(self):
+        """Shape of the signal in the sparse basis"""
         return self._signal_shape
         
     def _completeOps(self):
-        """
-        """
+        """Finalize the reconstruction of the problem"""
 
         if not hasattr(self, '_M') and not hasattr(self, '_B'):
             raise Exception('At least one of the operators M or B has be to given.')
@@ -85,7 +109,6 @@ class problemBase(object):
                 self._A = opFoG(operators)
             else:
                 self._A = operators[0]
-                
 
         #
         # Define empty solution if needed

@@ -40,7 +40,10 @@ class opBase(object):
     @property
     def shape(self):
         """The shape of the operator."""
-        return self._shape
+        if self._conj:
+            return self._shape[::-1]
+        else:
+            return self._shape
         
     @property
     def signal_shape(self):
@@ -60,12 +63,8 @@ class opBase(object):
         if x.shape == (1, 1) and self._shape != (1, 1):
             raise Exception('Operator-scalar multiplication not yet supported')
 
-        if self._conj:
-            if x.shape[0] != self._shape[0]:
-                raise Exception('Incompatible dimensions')
-        else:
-            if x.shape[0] != self._shape[1]:
-                raise Exception('Incompatible dimensions')
+        if x.shape[0] != self.shape[1]:
+            raise Exception('Incompatible dimensions')
 
         if x.shape[1] != 1:
             raise Exception('Operator-matrix multiplication not yet supported')
@@ -156,7 +155,12 @@ class opWavelet(opBase):
         # Create a reusable reconstruction tree
         #
         import pywt
-        self._wp = pywt.WaveletPacket2D(data=np.ones(self._signal_shape), wavelet=self._wavelet, maxlevel=self._level)
+        self._wp = pywt.WaveletPacket2D(
+            data=np.ones(self._signal_shape),
+            wavelet=self._wavelet,
+            maxlevel=self._level,
+            mode='per'
+        )
         self._leaf_nodes = self._wp.get_leaf_nodes(decompose=True)
         
     def __call__(self, x):
@@ -166,7 +170,12 @@ class opWavelet(opBase):
         self._checkDimensions(x)
 
         if self._conj:
-            wp = pywt.WaveletPacket2D(data=x.reshape(self._signal_shape), wavelet=self._wavelet, maxlevel=self._level)
+            wp = pywt.WaveletPacket2D(
+                data=x.reshape(self._signal_shape),
+                wavelet=self._wavelet,
+                maxlevel=self._level,
+                mode='per'
+            )
             coeff = [n.data for n in wp.get_leaf_nodes(decompose=True)]
             y = np.array(coeff).reshape((-1, 1))
         else:
@@ -249,6 +258,41 @@ class opFoG(opBase):
                 y = oper(y)
 
         return y
+
+
+class op3DStack(opBase):
+    """
+    Extend an operator to process a stack of signals.
+    """
+
+    def __init__(self, operator, dim3):
+        
+        if not isinstance(operator, opBase):
+            raise Exception('operator should be an instance of opBase.')
+
+        #
+        # Check operator consistency and space
+        #
+        m, n = operator.shape
+
+        super(op3DStack, self).__init__(name='3DStack', shape=(m*dim3, n*dim3))
+        self._operator = operator
+        self._dim3 = dim3
+
+    def __call__(self, x):
+
+        self._checkDimensions(x)
+
+        if self._conj:
+            op = self._operator.T
+        else:
+            op = self._operator
+        
+        y = []
+        for x_ in np.split(x, self._dim3):
+            y.append(op(x_))
+            
+        return np.vstack(y)
 
 
 def main():
