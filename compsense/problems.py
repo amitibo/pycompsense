@@ -5,7 +5,7 @@ Sparse problems
 from __future__ import division
 import numpy as np
 from .operators import *
-from .utils import *
+from .utilities import *
 
 
 class problemBase(object):

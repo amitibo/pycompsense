@@ -55,25 +55,10 @@ of this software or its fitness for any particular purpose.
 
 from __future__ import division
 import numpy as np
-from ..utils import *
+from ..utilities import *
 import time
 
 EPS = np.finfo(float).eps
-
-def _softThreshold(x, threshold):
-    """
-    Soft Thresholding
-    """
-    
-    #
-    # y = sign(x).*max(abs(x)-tau,0);
-    #
-    y = np.abs(x) - threshold
-    y[y<0] = 0
-    y[x<0] = -y[x<0]
-    
-    return y
-
 
 def TwIST(
         y,
@@ -335,7 +320,7 @@ def TwIST(
     #
     psi_soft = False
     if psi_function == None:
-        psi_function = _softThreshold
+        psi_function = softThreshold
         psi_soft = True
 
     phi_l1 = False
