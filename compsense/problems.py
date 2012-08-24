@@ -187,8 +187,8 @@ class prob701(problemBase):
         # Set up the problem
         #
         self._signal = signal.astype(np.float) / 256
-        self._M = opBlur(m, n)
-        self._B = opWavelet(m, n, 'Daubechies', 2)
+        self._M = opBlur(signal.shape)
+        self._B = opWavelet(signal.shape, 'Daubechies', 2)
         self._b = self._M(self._signal.reshape((-1, 1)))
         self._b += sigma * np.random.randn(m*n, 1)
 

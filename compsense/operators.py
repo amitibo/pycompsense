@@ -5,6 +5,7 @@ Operators relating to the sparse problems.
 from __future__ import division
 import numpy as np
 import numpy.fft as npfft
+import rwt
 
 
 class opBase(object):
@@ -71,20 +72,30 @@ class opBase(object):
             
 
 class opBlur(opBase):
-    """opBlur   Two-dimensional blurring operator
+    """
+    Two-dimensional blurring operator. creates an blurring operator
+    for M by N images. This function is used for the GPSR-based test
+    problems and is based on the implementation by Figueiredo, Nowak 
+    and Wright, 2007.
+2
+    Parameters
+    ----------
+    shape : (int, int)
+        Shape of target images.
 
-    opBlur(m, n) creates an blurring operator for M by N
-    images. This function is used for the GPSR-based test problems
-    and is based on the implementation by Figueiredo, Nowak and
-    Wright, 2007.
-
-    Copyright 2008, Ewout van den Berg and Michael P. Friedlander
-    http://www.cs.ubc.ca/labs/scl/sparco
     """
 
-    def __init__(self, m, n):
+    def __init__(self, shape):
         
-        super(opBlur, self).__init__(name='Blur', shape=(m*n, m*n), signal_shape=(m, n))
+        assert len(shape) == 2, "opBlur supports operations on 2D matrices only"
+        m, n = shape
+        size = m * n
+        
+        super(opBlur, self).__init__(
+            name='Blur',
+            shape=(size, size),
+            signal_shape=shape
+        )
         
         yc = int(m/2 + 1)
         xc = int(n/2 + 1)
@@ -136,54 +147,45 @@ class opWavelet(opBase):
     http://www.cs.ubc.ca/labs/scl/sparco
     """
     
-    def __init__(self, m, n, family='Daubechies', filter=8, levels=5, type='min'):
+    def __init__(self, shape, family='Daubechies', filter=8, levels=5, type='min'):
 
-        super(opWavelet, self).__init__(name='Wavelet', shape=(m*n, m*n), signal_shape=(m, n))
+        assert len(shape) == 2, "opWavelet supports operations on 2D matrices only"
+        size = shape[0] * shape[1]
+        
+        super(opWavelet, self).__init__(
+            name='Wavelet',
+            shape=(size, size),
+            signal_shape=shape
+        )
         
         family = family.lower()
 
         if family == 'daubechies':
-            self._wavelet = 'db%d' % int(filter/2)
+            self._wavelet = rwt.daubcqf(filter)[0]
         elif family == 'daubechies':
-            self._wavelet = 'haar'
+            self._wavelet = rwt.daubcqf(0)[0]
         else:
             raise Exception('Wavelet family %s is unknown' % family)
 
         self._level = levels
         
-        #
-        # Create a reusable reconstruction tree
-        #
-        import pywt
-        self._wp = pywt.WaveletPacket2D(
-            data=np.ones(self._signal_shape),
-            wavelet=self._wavelet,
-            maxlevel=self._level,
-            mode='per'
-        )
-        self._leaf_nodes = self._wp.get_leaf_nodes(decompose=True)
-        
     def __call__(self, x):
         
-        import pywt
-
         self._checkDimensions(x)
 
         if self._conj:
-            wp = pywt.WaveletPacket2D(
-                data=x.reshape(self._signal_shape),
-                wavelet=self._wavelet,
-                maxlevel=self._level,
-                mode='per'
-            )
-            coeff = [n.data for n in wp.get_leaf_nodes(decompose=True)]
-            y = np.array(coeff).reshape((-1, 1))
+            wf = rwt.mdwt
         else:
-            coeff = x.reshape([len(self._leaf_nodes)] + list(self._leaf_nodes[0].data.shape))
-            for i, node in enumerate(self._leaf_nodes):
-                node.data = coeff[i]
-            y = self._wp.reconstruct(update=False).reshape((-1, 1))
-
+            wf = rwt.midwt 
+            
+        if np.isrealobj(x):
+            y, l = wf(x.reshape(self._signal_shape), self._wavelet, self._level)
+        else:
+            [y1, l] = wf(x.real.reshape(self._signal_shape), self._wavelet, self._level)
+            [y2, l] = wf(x.imag.reshape(self._signal_shape), self._wavelet, self._level)
+            y = y1 + 1j*y2
+             
+        y.shape = (-1, 1)
         return y
 
 
