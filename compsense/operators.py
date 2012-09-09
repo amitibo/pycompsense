@@ -77,7 +77,7 @@ class opBlur(opBase):
     for M by N images. This function is used for the GPSR-based test
     problems and is based on the implementation by Figueiredo, Nowak 
     and Wright, 2007.
-2
+
     Parameters
     ----------
     shape : (int, int)

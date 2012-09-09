@@ -134,37 +134,34 @@ class problemBase(object):
 
 class prob701(problemBase):
     """
-    prob701  GPSR example: Daubechies basis, blurred Photographer.
+    GPSR example: Daubechies basis, blurred Photographer.
+    prob701 creates a problem structure.  The generated signal will
+    consist of the 256 by 256 grayscale 'photographer' image. The
+    signal is blurred by convolution with an 9 by 9 blurring mask and
+    normally distributed noise with standard deviation SIGMA = 0.0055
+    is added to the final signal.
 
-       prob701 creates a problem structure.  The generated signal will
-       consist of the 256 by 256 grayscale 'photographer' image. The
-       signal is blurred by convolution with an 8 by 8 blurring mask and
-       normally distributed noise with standard deviation SIGMA = 0.0055
-       is added to the final signal.
+    Arguments
+    ---------
 
-       The following optional arguments are supported:
+    sigma : float, optional (default=sqrt(2)/256)
+        Standard deviation of the additive noise.
+    noseed : bool, optional (default=False)
+         When True, the nitialization of the random number
+         generators is suppressed
 
-       prob701(sigma=SIGMA, flags) is the same as above, but with the
-       noise level set to SIGMA. The 'noseed' flag can be specified to
-       suppress initialization of the random number generators. Both the
-       parameter pair and flags can be omitted.
+    Examples
+    --------
+    P = prob701()   # Creates the default 701 problem.
 
-       Examples:
-       P = prob701()   # Creates the default 701 problem.
+    References
+    ----------
 
-       References:
+    [FiguNowaWrig:2007] M. Figueiredo, R. Nowak and S.J. Wright,
+      Gradient projection for sparse reconstruction: Application to
+      compressed sensing and other inverse problems, Submitted,
+      2007. See also http://www.lx.it.pt/~mtf/GPSR
 
-       [FiguNowaWrig:2007] M. Figueiredo, R. Nowak and S.J. Wright,
-         Gradient projection for sparse reconstruction: Application to
-         compressed sensing and other inverse problems, Submitted,
-         2007. See also http://www.lx.it.pt/~mtf/GPSR
-
-       See also GENERATEPROBLEM.
-
-    MATLAB SPARCO Toolbox.
-
-       Copyright 2008, Ewout van den Berg and Michael P. Friedlander
-       http://www.cs.ubc.ca/labs/scl/sparco
     """
 
     def __init__(self, sigma=np.sqrt(2)/256, noseed=False):
