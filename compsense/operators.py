@@ -6,6 +6,7 @@ from __future__ import division
 import numpy as np
 import numpy.fft as npfft
 import rwt
+from rwt import wavelets
 
 
 class opBase(object):
@@ -69,8 +70,21 @@ class opBase(object):
 
         if x.shape[1] != 1:
             raise Exception('Operator-matrix multiplication not yet supported')
-            
+    
+    def _apply(self, x):
+        """Apply the operator on the input signal. Should be overwritten by the operator."""
+        
+        raise NotImplementedError()
+        
+    def __call__(self, x):
+        
+        self._checkDimensions(x)
 
+        y = self._apply(x)
+        
+        return y
+    
+    
 class opBlur(opBase):
     """
     Two-dimensional blurring operator. creates an blurring operator
@@ -112,9 +126,7 @@ class opBlur(opBase):
         h /= h.sum()
         self._h = npfft.fft2(h)
         
-    def __call__(self, x):
-
-        self._checkDimensions(x)
+    def _apply(self, x):
 
         if not self._conj:
             h = self._h
@@ -161,7 +173,7 @@ class opWavelet(opBase):
         family = family.lower()
 
         if family == 'daubechies':
-            self._wavelet = rwt.daubcqf(filter)[0]
+            self._wavelet = wavelets.daubcqf(filter)[0]
         elif family == 'daubechies':
             self._wavelet = rwt.daubcqf(0)[0]
         else:
@@ -169,10 +181,8 @@ class opWavelet(opBase):
 
         self._level = levels
         
-    def __call__(self, x):
+    def _apply(self, x):
         
-        self._checkDimensions(x)
-
         if self._conj:
             wf = rwt.mdwt
         else:
@@ -203,10 +213,8 @@ class opDirac(opBase):
 
         super(opDirac, self).__init__(name='Dirac', shape=(n, n))
 
-    def __call__(self, x):
+    def _apply(self, x):
         
-        self._checkDimensions(x)
-
         return x.copy()
 
 
@@ -246,9 +254,7 @@ class opFoG(opBase):
         super(opFoG, self).__init__(name='FoG', shape=(m, n))
         self._operators_list = operators_list
 
-    def __call__(self, x):
-
-        self._checkDimensions(x)
+    def _apply(self, x):
 
         if self._conj:
             y = self._operators_list[0].T(x)
@@ -281,9 +287,7 @@ class op3DStack(opBase):
         self._operator = operator
         self._dim3 = dim3
 
-    def __call__(self, x):
-
-        self._checkDimensions(x)
+    def _apply(self, x):
 
         if self._conj:
             op = self._operator.T
