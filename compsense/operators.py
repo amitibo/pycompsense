@@ -24,14 +24,24 @@ class opBase(object):
     -------
     """
 
-    def __init__(self, name, shape, signal_shape=None):
+    def __init__(self, name, shape, in_signal_shape=None, out_signal_shape=None):
 
-        if signal_shape==None:
-            signal_shape = (shape[1], 1)
+        if in_signal_shape==None:
+            in_signal_shape = (shape[1], 1)
+            out_signal_shape = (shape[0], 1)            
+        elif out_signal_shape==None:
+            if shape[0]==shape[1]:
+                out_signal_shape = in_signal_shape
+            else:
+                out_signal_shape = (shape[0], 1)
+            
+        assert np.prod(in_signal_shape)==shape[1], 'Input signal shape does not conform to the shape of the operator'
+        assert np.prod(out_signal_shape)==shape[0], 'Output signal shape does not conform to the shape of the operator'
             
         self._name = name
         self._shape = shape
-        self._signal_shape = signal_shape
+        self._in_signal_shape = in_signal_shape
+        self._out_signal_shape = out_signal_shape
         self._conj = False
             
     @property
@@ -48,9 +58,20 @@ class opBase(object):
             return self._shape
         
     @property
-    def signal_shape(self):
+    def in_signal_shape(self):
         """The shape of the input signal for the operator."""
-        return self._signal_shape
+        if self._conj:
+            return self._out_signal_shape
+        else:
+            return self._in_signal_shape
+    
+    @property
+    def out_signal_shape(self):
+        """The shape of the output signal for the operator."""
+        if self._conj:
+            return self._in_signal_shape
+        else:
+            return self._out_signal_shape
         
     @property
     def T(self):
@@ -78,11 +99,11 @@ class opBase(object):
         
     def __call__(self, x):
         
+        x = x.reshape((-1, 1))
+        
         self._checkDimensions(x)
 
-        y = self._apply(x)
-        
-        return y
+        return self._apply(x).reshape(self.out_signal_shape)
     
     
 class opBlur(opBase):
@@ -108,7 +129,7 @@ class opBlur(opBase):
         super(opBlur, self).__init__(
             name='Blur',
             shape=(size, size),
-            signal_shape=shape
+            in_signal_shape=shape
         )
         
         yc = int(m/2 + 1)
@@ -133,7 +154,7 @@ class opBlur(opBase):
         else:
             h = self._h.conj()
 
-        y = npfft.ifft2(h * npfft.fft2(x.reshape(self._signal_shape))).reshape((-1, 1))
+        y = npfft.ifft2(h * npfft.fft2(x.reshape(self._in_signal_shape))).reshape((-1, 1))
 
         if np.isrealobj(x):
             y = np.real(y)
@@ -167,7 +188,7 @@ class opWavelet(opBase):
         super(opWavelet, self).__init__(
             name='Wavelet',
             shape=(size, size),
-            signal_shape=shape
+            in_signal_shape=shape
         )
         
         family = family.lower()
@@ -189,10 +210,10 @@ class opWavelet(opBase):
             wf = rwt.midwt 
             
         if np.isrealobj(x):
-            y, l = wf(x.reshape(self._signal_shape), self._wavelet, self._level)
+            y, l = wf(x.reshape(self._in_signal_shape), self._wavelet, self._level)
         else:
-            [y1, l] = wf(x.real.reshape(self._signal_shape), self._wavelet, self._level)
-            [y2, l] = wf(x.imag.reshape(self._signal_shape), self._wavelet, self._level)
+            [y1, l] = wf(x.real.reshape(self._in_signal_shape), self._wavelet, self._level)
+            [y2, l] = wf(x.imag.reshape(self._in_signal_shape), self._wavelet, self._level)
             y = y1 + 1j*y2
              
         y.shape = (-1, 1)
@@ -251,7 +272,12 @@ class opFoG(opBase):
 
             n = n_
 
-        super(opFoG, self).__init__(name='FoG', shape=(m, n))
+        super(opFoG, self).__init__(
+            name='FoG',
+            shape=(m, n),
+            in_signal_shape=operators_list[-1].in_signal_shape,
+            out_signal_shape=operators_list[0].out_signal_shape
+        )
         self._operators_list = operators_list
 
     def _apply(self, x):

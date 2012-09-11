@@ -187,7 +187,7 @@ class prob701(problemBase):
         self._M = opBlur(signal.shape)
         self._B = opWavelet(signal.shape, 'Daubechies', 2)
         self._b = self._M(self._signal.reshape((-1, 1)))
-        self._b += sigma * np.random.randn(m*n, 1)
+        self._b += sigma * np.random.randn(m, n)
 
         #
         # Finish up creation of the problem
