@@ -308,8 +308,25 @@ class op3DStack(opBase):
         # Check operator consistency and space
         #
         m, n = operator.shape
-
-        super(op3DStack, self).__init__(name='3DStack', shape=(m*dim3, n*dim3))
+        
+        in_signal_shape = operator.in_signal_shape
+        if in_signal_shape[1] == 1:
+            in_signal_shape = (in_signal_shape[0]*dim3, 1)
+        else:
+            in_signal_shape = (in_signal_shape[0], in_signal_shape[1], dim3)
+            
+        out_signal_shape = operator.out_signal_shape
+        if out_signal_shape[1] == 1:
+            out_signal_shape = (out_signal_shape[0]*dim3, 1)
+        else:
+            out_signal_shape = (out_signal_shape[0], out_signal_shape[1], dim3)
+            
+        super(op3DStack, self).__init__(
+            name='3DStack',
+            shape=(m*dim3, n*dim3),
+            in_signal_shape=in_signal_shape,
+            out_signal_shape=out_signal_shape
+        )
         self._operator = operator
         self._dim3 = dim3
 
