@@ -205,9 +205,9 @@ class opWavelet(opBase):
     def _apply(self, x):
         
         if self._conj:
-            wf = rwt.mdwt
+            wf = rwt.dwt
         else:
-            wf = rwt.midwt 
+            wf = rwt.idwt 
             
         if np.isrealobj(x):
             y, l = wf(x.reshape(self._in_signal_shape), self._wavelet, self._level)
