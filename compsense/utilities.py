@@ -1,5 +1,8 @@
 """
+utilities - Several utilities useful when using pycompsesne
+===========================================================
 
+.. codeauthor:: Amit Aides <amitibo@tx.technion.ac.il>
 """
 
 from __future__ import division
@@ -9,7 +12,9 @@ import types
 
 
 def getResourcePath(name):
-    """return the path to resource"""
+    """
+    Return the path to a resource
+    """
 
     return pkg_resources.resource_filename(__name__, "data/%s" % name)
     
@@ -20,6 +25,7 @@ def isFunction(f):
     """
 
     return isinstance(f, types.FunctionType) or isinstance(f, types.MethodType) or hasattr(f, '__call__')
+
 
 def softThreshold(x, threshold):
     """
@@ -44,12 +50,39 @@ def softThreshold(x, threshold):
             y = sign(x) \star \max(\abs(x)-threshold, 0)
     """
     
-    #
-    # y = sign(x).*max(abs(x)-tau,0);
-    #
     y = np.abs(x) - threshold
     y[y<0] = 0
     y[x<0] = -y[x<0]
+    
+    return y
+
+
+def hardThreshold(x, threshold):
+    """
+    Apply Hard Thresholding
+    
+    Parameters
+    ----------
+    
+    x : array-like
+        Vector to which the hard thresholding is applied
+        
+    threshold : float
+        Threhold of the hard thresholding
+    
+    Returns:
+    --------
+    y : array
+        Result of the applying hard thresholding to x.
+        
+        .. math::
+              
+            y = x * (\abs(x) > threshold)
+    """
+    
+    y = np.zeros_like(x)
+    ind = np.abs(x) > threshold
+    y[ind] = x[ind]
     
     return y
 

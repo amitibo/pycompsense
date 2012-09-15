@@ -85,7 +85,7 @@ def main(plot_results=False):
     plt.title('Original Image')
 
     plt.figure()
-    plt.imshow(b.reshape(P.signal_shape), cmap=cm.gray, origin='lower')
+    plt.imshow(b.reshape(P.A.out_signal_shape), cmap=cm.gray, origin='lower')
     plt.title('Blurred and Noisy Image')
     
     plt.figure()

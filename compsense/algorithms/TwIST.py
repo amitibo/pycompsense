@@ -33,10 +33,9 @@ and
     Algorithm for Compressive Sensing and Other Ill-Posed 
     Inverse Problems", submitted, 2007.
 
-The python implementation is based on the Matlab implemebtation
-by: Jose Bioucas-Dias and Mario Figueiredo, October, 2007.
-
 -----------------------------------------------------------------------
+The python implementation is based on the Matlab implemebtation
+of TWIST.
 Copyright (2007): Jose Bioucas-Dias and Mario Figueiredo
 
 TwIST is distributed under the terms of 
@@ -51,6 +50,10 @@ This software is being provided "as is", without any express or
 implied warranty.  In particular, the authors do not make any
 representation or warranty of any kind concerning the merchantability
 of this software or its fitness for any particular purpose.
+-----------------------------------------------------------------------
+
+.. codeauthor:: Amit Aides <amitibo@tx.technion.ac.il>
+
 """
 
 from __future__ import division
