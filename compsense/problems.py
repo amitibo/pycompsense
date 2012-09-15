@@ -1,5 +1,18 @@
 """
-Sparse problems
+problems
+========
+
+A set of problems for testing and benchmarking algorithms for sparse
+signal reconstruction. problemBase should be subclassed for creating
+new problems.
+
+..
+    This module is based on MATLAB SPARCO Toolbox.
+    Copyright 2008, Ewout van den Berg and Michael P. Friedlander
+    http://www.cs.ubc.ca/labs/scl/sparco
+
+.. codeauthor:: Amit Aides <amitibo@tx.technion.ac.il>
+
 """
 
 from __future__ import division
@@ -22,6 +35,27 @@ class problemBase(object):
     and :math:`b` is the observation vector. :math:`A` can be factored
     into :math:`M` which represents the system response and :math:`B`
     basis that sparsifies the signal.
+    
+    Attributes
+    ----------
+    name : string
+        Name of problem.
+    A : Instance of a subclass of opBase
+        The :math:`A` matrix of the problem.
+    M : Instance of a subclass of opBase
+        :math:`M`, sampling matrix of the problem.
+    B : Instance of a subclass of opBase
+        :math:`B`, sparsifying basis matrix of the problem.
+    b : array of arbitrary shape
+        :math:'b', observation array.
+    signal : array of arbitrary shape
+        Signal in original basis (Not in the sparsifying basis)
+    signal_shape : tuple of integers
+        :math:'b', Shape of the signal in the sparsifying basis.
+        
+    Methods
+    -------
+    reconstruct : Reconstruct signal from sparse coefficients.
     """
 
     def __init__(self, name, noseed=False):
@@ -30,7 +64,6 @@ class problemBase(object):
         ----------
         name : str
             Name of the problem
-            
         noseed: Boolean, optional (default=False)
             When False, the random seed is reset to 0.
         """
@@ -45,41 +78,49 @@ class problemBase(object):
 
     @property
     def name(self):
-        """Name of the problem"""
+        """Name of the problem
+        """
         return self._name
         
     @property
     def A(self):
-        """Response of the problem"""
+        """Response of the problem
+        """
         return self._A
         
     @property
     def M(self):
-        """Sampling matrix"""
+        """Sampling matrix
+        """
         return self._M
         
     @property
     def B(self):
-        """Base matrix"""
+        """Base matrix
+        """
         return self._B
         
     @property
     def b(self):
-        """Observation vector"""
+        """Observation vector
+        """
         return self._b
         
     @property
     def signal(self):
-        """Signal in original basis (Not in sparse basis)"""
+        """Signal in original basis (Not in sparse basis)
+        """
         return self._signal
         
     @property
     def signal_shape(self):
-        """Shape of the signal in the sparse basis"""
+        """Shape of the signal in the sparse basis
+        """
         return self._signal_shape
         
     def _completeOps(self):
-        """Finalize the reconstruction of the problem"""
+        """Finalize the reconstruction of the problem. Should be called by the constructor.
+        """
 
         if not hasattr(self, '_M') and not hasattr(self, '_B'):
             raise Exception('At least one of the operators M or B has be to given.')
@@ -141,15 +182,6 @@ class prob701(problemBase):
     normally distributed noise with standard deviation SIGMA = 0.0055
     is added to the final signal.
 
-    Arguments
-    ---------
-
-    sigma : float, optional (default=sqrt(2)/256)
-        Standard deviation of the additive noise.
-    noseed : bool, optional (default=False)
-         When True, the nitialization of the random number
-         generators is suppressed
-
     Examples
     --------
     P = prob701()   # Creates the default 701 problem.
@@ -165,7 +197,15 @@ class prob701(problemBase):
     """
 
     def __init__(self, sigma=np.sqrt(2)/256, noseed=False):
-        
+        """
+        Parameters
+        ----------
+        sigma : float, optional (default=sqrt(2)/256)
+            Standard deviation of the additive noise.
+        noseed : bool, optional (default=False)
+             When True, the nitialization of the random number
+             generators is suppressed
+        """
         super(prob701, self).__init__(name='blurrycam', noseed=noseed)
 
         #

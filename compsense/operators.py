@@ -1,5 +1,18 @@
 """
-Operators relating to the sparse problems.
+operators
+=========
+
+The class defined in this module, implement different operators that
+operate on input signals. These operators are used for defining
+problems. opBase should be subclassed for creating new operators.
+
+..
+    This module is based on MATLAB SPARCO Toolbox.
+    Copyright 2008, Ewout van den Berg and Michael P. Friedlander
+    http://www.cs.ubc.ca/labs/scl/sparco
+
+.. codeauthor:: Amit Aides <amitibo@tx.technion.ac.il>
+
 """
 
 from __future__ import division
@@ -17,15 +30,38 @@ class opBase(object):
     ----------
     name : string
         Name of operator.
-    shape : tuple
-        The shape of the target for the operator.
-    
+    shape : (int, int)
+        The shape of the operator.
+    in_signal_shape : tuple of ints
+        The shape of the input signal.
+    out_signal_shape : tuple of ints
+        The shape of the output signal.
+    T : type(self)
+        The transpose of the operator.
+        
     Methods
     -------
     """
 
     def __init__(self, name, shape, in_signal_shape=None, out_signal_shape=None):
-
+        """
+        Parameters
+        ----------
+        name : string
+            Name of operator.
+        shape : (int, int)
+            The shape of the operator. `shape[1]` is the size of the input signal.
+            `shape[0]` is the size of the output signal.
+        in_signal_shape : tuple of integers, optional (default=None)
+            The shape of the input signal. The product of `in_signal_shape` should
+            be equal to `shape[1]`. If `None`, then it is set to (shape[1], 1).
+        out_signal_shape : tuple of ints
+            The shape of the output signal. The product of `out_signal_shape` should
+            be equal to `shape[1]`. If `in_signal_shape=None`, then it is set to
+            (shape[0], 1). If `out_signal_shape=None` and `shape[0]=shape[1]` then
+            `out_signal_shape=in_signal_shape`.
+        """
+        
         if in_signal_shape==None:
             in_signal_shape = (shape[1], 1)
             out_signal_shape = (shape[0], 1)            
@@ -46,12 +82,14 @@ class opBase(object):
             
     @property
     def name(self):
-        """Name of operator."""
+        """Name of operator.
+        """
         return self._name
         
     @property
     def shape(self):
-        """The shape of the operator."""
+        """The shape of the operator.
+        """
         if self._conj:
             return self._shape[::-1]
         else:
@@ -59,7 +97,8 @@ class opBase(object):
         
     @property
     def in_signal_shape(self):
-        """The shape of the input signal for the operator."""
+        """The shape of the input signal for the operator.
+        """
         if self._conj:
             return self._out_signal_shape
         else:
@@ -67,7 +106,8 @@ class opBase(object):
     
     @property
     def out_signal_shape(self):
-        """The shape of the output signal for the operator."""
+        """The shape of the output signal for the operator.
+        """
         if self._conj:
             return self._in_signal_shape
         else:
@@ -75,6 +115,8 @@ class opBase(object):
         
     @property
     def T(self):
+        """The transpose of the operator.
+        """
         import copy
 
         new_copy = copy.copy(self)
@@ -82,6 +124,14 @@ class opBase(object):
         return new_copy
 
     def _checkDimensions(self, x):
+        """Check that the size of the input signal is correct.
+        This function is called by the `__call__` method.
+        
+        Parameters
+        ==========
+        x : array
+            Input signal in columnstack order.
+        """
 
         if x.shape == (1, 1) and self._shape != (1, 1):
             raise Exception('Operator-scalar multiplication not yet supported')
@@ -93,7 +143,14 @@ class opBase(object):
             raise Exception('Operator-matrix multiplication not yet supported')
     
     def _apply(self, x):
-        """Apply the operator on the input signal. Should be overwritten by the operator."""
+        """Apply the operator on the input signal. Should be overwritten by the operator.
+        This function is called by the `__call__` method.
+        
+        Parameters
+        ==========
+        x : array
+            Input signal in columnstack order.
+        """
         
         raise NotImplementedError()
         
@@ -108,7 +165,7 @@ class opBase(object):
     
 class opBlur(opBase):
     """
-    Two-dimensional blurring operator. creates an blurring operator
+    Two-dimensional blurring operator. creates a blurring operator
     for M by N images. This function is used for the GPSR-based test
     problems and is based on the implementation by Figueiredo, Nowak 
     and Wright, 2007.
@@ -117,7 +174,6 @@ class opBlur(opBase):
     ----------
     shape : (int, int)
         Shape of target images.
-
     """
 
     def __init__(self, shape):
@@ -163,25 +219,31 @@ class opBlur(opBase):
         
 
 class opWavelet(opBase):
-    """opWavelet  Wavelet operator
-
-    opwavelet(m, n, family, filter, levels, type) creates a wavelet
-    operator of given FAMILY, for M by N matrices. The wavelet
-    transformation is computed using the Rice Wavelet Toolbox.
-
-    The remaining three parameters are optional. FILTER = 8
-    specifies the filter length and must be even. LEVELS = 5 gives
-    the number of levels in the transformation. Both M and N must
-    be divisible by 2^LEVELS. TYPE = 'min' indicates what type of
-    solution is desired; 'min' for minimum phase, 'max' for
-    maximum phase, and 'mid' for mid-phase solutions.
+    """Wavelet operator.
     
-    Copyright 2008, Rayan Saab, Ewout van den Berg and Michael P. Friedlander
-    http://www.cs.ubc.ca/labs/scl/sparco
+    Create an operator that applies a given wavelet transform to
+    a 2D input signal.
     """
     
     def __init__(self, shape, family='Daubechies', filter=8, levels=5, type='min'):
-
+        """
+        Parameters
+        ==========
+        shape : (m, n)
+            Shape of the 2D input signal.
+        family : {'Daubechies', 'haar'}, optional
+            The family of the wavelet.
+        filter : integer, optional (default=8)
+            Length of the wavelet filter.
+        levels : integer, optional (default=5)
+            Number of levels in the transformation. Both `m` and `n` must
+            be divisible by 2**levels.
+        type : {'min', 'max', 'mid'}, optional
+            Indicates what type of solution is desired; 'min' for minimum
+            phase, 'max' for maximum phase, and 'mid' for mid-phase
+            solutions.
+        """
+        
         assert len(shape) == 2, "opWavelet supports operations on 2D matrices only"
         size = shape[0] * shape[1]
         
@@ -195,7 +257,7 @@ class opWavelet(opBase):
 
         if family == 'daubechies':
             self._wavelet = wavelets.daubcqf(filter)[0]
-        elif family == 'daubechies':
+        elif family == 'haar':
             self._wavelet = rwt.daubcqf(0)[0]
         else:
             raise Exception('Wavelet family %s is unknown' % family)
@@ -221,17 +283,18 @@ class opWavelet(opBase):
 
 
 class opDirac(opBase):
-    """
-    Identity operator
-
-    opDirac(N) creates the identity operator for vectors of length N. 
-
-    Copyright 2008, Ewout van den Berg and Michael P. Friedlander
-    http://www.cs.ubc.ca/labs/scl/sparco
+    """Identity operator
+    
+    Create an operator whose output signal equals the input signal.
     """
 
     def __init__(self, n):
-
+        """
+        Parameters
+        ==========
+        n : integer
+            Size of the input signal.
+        """
         super(opDirac, self).__init__(name='Dirac', shape=(n, n))
 
     def _apply(self, x):
@@ -240,22 +303,19 @@ class opDirac(opBase):
 
 
 class opFoG(opBase):
-    """
-    Concatenate a sequence of operators into a single operator.
-
-    opFoG((OP1,OP2,...OPn)) creates an operator that successively
-    applies each of the operators OP1, OP2, ..., OPn on a given
-    input vector. In non-adjoint mode this is done in reverse
-    order, starting with OPn.
-
-    See also opDictionary
-
-    Copyright 2008, Ewout van den Berg and Michael P. Friedlander
-    http://www.cs.ubc.ca/labs/scl/sparco
+    """Concatenate a sequence of operators into a single operator.
     """
 
     def __init__(self, operators_list):
-        
+        """
+        Parameters
+        ==========
+        operators_list : list
+            List of operators. All the operators must be instances of
+            `opBase` or its subclasses. The `opFoG` operator applies
+            the operators to the input signal in reverse order, i.e.
+            starting with `operators_list[-1]`.
+        """
         if len(operators_list) == 0:
             raise Exception('At least one operator must be specified')
 
@@ -295,12 +355,24 @@ class opFoG(opBase):
 
 
 class op3DStack(opBase):
-    """
-    Extend an operator to process a stack of signals.
+    """Extend an operator to process a stack of signals.
+    
+    The op3DStack operator is useful for example when the input signal
+    is a stack of images and the base operator is applied to each
+    image separately.
     """
 
     def __init__(self, operator, dim3):
-        
+        """
+        Parameters
+        ==========
+        operator : instance of a subclass of opBase 
+            The base operator. This operator is applied separately
+            to each of the sections that make up the stacked input
+            signal.
+        dim3 : integer
+            The size of the stack.
+        """
         if not isinstance(operator, opBase):
             raise Exception('operator should be an instance of opBase.')
 

@@ -8,9 +8,12 @@ the :ref:`tutorial <tutorial>` for further details, as the class and
 function raw specifications may not be enough to give full guidelines on their
 uses.
 
+.. automodule:: compsense.operators
+
 .. autoclass:: compsense.operators.opBase
    :members:
-
+   :private-members:
+      
 .. autoclass:: compsense.operators.opBlur
    :members:
 
@@ -23,11 +26,19 @@ uses.
 .. autoclass:: compsense.operators.opFoG
    :members:
 
+.. autoclass:: compsense.operators.op3DStack
+   :members:
+
+
+.. automodule:: compsense.problems
+
 .. autoclass:: compsense.problems.problemBase
    :members:
+   :private-members:
 
 .. autoclass:: compsense.problems.prob701
    :members:
+
 
 .. automodule:: compsense.algorithms
 
