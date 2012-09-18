@@ -10,43 +10,33 @@ uses.
 
 .. automodule:: compsense.operators
 
-.. autoclass:: compsense.operators.opBase
-   :members:
-   :private-members:
-      
-.. autoclass:: compsense.operators.opBlur
-   :members:
+.. autosummary::
+   :toctree: generated/
 
-.. autoclass:: compsense.operators.opWavelet
-   :members:
-
-.. autoclass:: compsense.operators.opDirac
-   :members:
-
-.. autoclass:: compsense.operators.opFoG
-   :members:
-
-.. autoclass:: compsense.operators.op3DStack
-   :members:
+   compsense.operators.opBase
+   compsense.operators.opBlur
+   compsense.operators.opWavelet
+   compsense.operators.opDirac
+   compsense.operators.opFoG
+   compsense.operators.op3DStack
 
 
 .. automodule:: compsense.problems
 
-.. autoclass:: compsense.problems.problemBase
-   :members:
-   :private-members:
+.. autosummary::
+   :toctree: generated/
 
-.. autoclass:: compsense.problems.prob701
-   :members:
+   compsense.problems.problemBase
+   compsense.problems.problemBase.reconstruct
+   compsense.problems.prob701
 
 
 .. automodule:: compsense.algorithms
 
-.. autoclass:: compsense.algorithms.algorithmBase
-   :members:
-   :private-members:
+.. autosummary::
+   :toctree: generated/
 
-.. autoclass:: compsense.algorithms.TwIST
-   :members:
-
-.. autofunction:: compsense.algorithms.TwIST_raw
+   compsense.algorithms.algorithmBase
+   compsense.algorithms.algorithmBase.solve
+   compsense.algorithms.TwIST
+   compsense.algorithms.TwIST_raw

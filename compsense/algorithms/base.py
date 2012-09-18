@@ -111,7 +111,7 @@ class algorithmBase(object):
         Returns
         -------
         x : array,
-            solution of the main algorithm
+            Solution of the main algorithm
         """
         
         return self._solve(x_init)

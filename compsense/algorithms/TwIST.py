@@ -107,9 +107,10 @@ def TwIST_raw(
     and
     
     .. [2]
-    J. Bioucas-Dias and M. Figueiredo, "A Monotonic Two-Step 
-    Algorithm for Compressive Sensing and Other Ill-Posed 
-    Inverse Problems", submitted, 2007.
+        J. Bioucas-Dias and M. Figueiredo, "A Monotonic Two-Step 
+        Algorithm for Compressive Sensing and Other Ill-Posed 
+        Inverse Problems", submitted, 2007.
+        
     Parameters
     ----------
     

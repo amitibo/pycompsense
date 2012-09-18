@@ -2,7 +2,7 @@
 operators
 =========
 
-The class defined in this module, implement different operators that
+The classes defined in this module, implement different operators that
 operate on input signals. These operators are used for defining
 problems. opBase should be subclassed for creating new operators.
 

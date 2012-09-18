@@ -17,7 +17,7 @@ mod:`compsense` Package
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    install
    tutorial
