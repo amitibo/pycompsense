@@ -108,13 +108,19 @@ class problemBase(object):
         
     @property
     def signal(self):
-        """Signal in original basis (Not in sparse basis)
+        """Signal (Not in sparsifying basis)
         """
         return self._signal
         
     @property
+    def x0(self):
+        """Solution to problem
+        """
+        return self._x0
+        
+    @property
     def signal_shape(self):
-        """Shape of the signal in the sparse basis
+        """Shape of the signal
         """
         return self._signal_shape
         
@@ -123,7 +129,7 @@ class problemBase(object):
         """
 
         if not hasattr(self, '_M') and not hasattr(self, '_B'):
-            raise Exception('At least one of the operators M or B has be to given.')
+            raise Exception('At least one of the operator fileds _M or _B is required.')
 
         #
         # Define measurement matrix
@@ -162,7 +168,7 @@ class problemBase(object):
         #
         if not hasattr(self, '_signal_shape'):
             if not hasattr(self, '_signal'):
-                raise Exception('At least one of the fields signal or signalSize must be given.')
+                raise Exception('At least one of the fields _signal or _signal_shape is required.')
             self._signal_shape = self._signal.shape
 
     def reconstruct(self, x):
@@ -184,7 +190,7 @@ class prob701(problemBase):
 
     Examples
     --------
-    P = prob701()   # Creates the default 701 problem.
+    >>> P = prob701()   # Creates the default 701 problem.
 
     References
     ----------
@@ -228,7 +234,8 @@ class prob701(problemBase):
         self._B = opWavelet(signal.shape, 'Daubechies', 2)
         self._b = self._M(self._signal.reshape((-1, 1)))
         self._b += sigma * np.random.randn(m, n)
-
+        self._x0 = self._B.T(self._signal)
+        
         #
         # Finish up creation of the problem
         #

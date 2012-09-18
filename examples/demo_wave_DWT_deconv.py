@@ -43,11 +43,6 @@ def main(plot_results=False):
     #
     P = compsense.problems.prob701(sigma=1e-3)
   
-    yorig = P.signal
-    b  = P.b
-  
-    m, n = P.A.shape
-  
     #
     # Regularization parameter
     #
@@ -57,16 +52,14 @@ def main(plot_results=False):
     # Solve an L1 recovery problem:
     # minimize  1/2|| Ax - b ||_2^2  +  tau ||x||_1
     #
-    x, dummy, obj, times, dummy, mses, dummy = compsense.algorithms.TwIST(
-        P.b,
-        P.A,
+    alg = compsense.algorithms.TwIST(
+        P,
         tau,
-        AT=P.A.T,
-        true_x=P.B.T(P.signal.reshape((-1, 1))),
         stop_criterion=1,
         tolA=1e-3
         )
-
+    x = alg.solve()
+    
     #
     # The solution x is the reconstructed signal in the sparsity basis.
     # Use the function handle P.reconstruct to use the coefficients in
@@ -81,11 +74,11 @@ def main(plot_results=False):
     # Show results
     #
     plt.figure()
-    plt.imshow(yorig, cmap=cm.gray, origin='lower')
+    plt.imshow(P.signal, cmap=cm.gray, origin='lower')
     plt.title('Original Image')
 
     plt.figure()
-    plt.imshow(b.reshape(P.A.out_signal_shape), cmap=cm.gray, origin='lower')
+    plt.imshow(P.b.reshape(P.A.out_signal_shape), cmap=cm.gray, origin='lower')
     plt.title('Blurred and Noisy Image')
     
     plt.figure()
@@ -93,13 +86,13 @@ def main(plot_results=False):
     plt.title('Reconstructed Image')
     
     plt.figure()
-    plt.semilogy(times, obj, lw=2)
+    plt.semilogy(alg.times, alg.objectives, lw=2)
     plt.title('Evolution of the objective function')
     plt.xlabel('CPU time (sec)')
     plt.grid(True)
     
     plt.figure()
-    plt.semilogy(times, mses, lw=2)
+    plt.semilogy(alg.times, alg.mses, lw=2)
     plt.title('Evolution of the mse')
     plt.xlabel('CPU time (sec)')
     plt.grid(True)

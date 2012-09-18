@@ -1,21 +1,16 @@
-"""
-*****
-TwIST
-*****
-
-Two-step Iterative Shrinkage/Thresholding Algorithm for Linear Inverse Problems.
+"""Two-step Iterative Shrinkage/Thresholding Algorithm for Linear Inverse Problems.
 Solves the regularization problem 
 
 .. math::
 
-    arg min_x = 0.5*|| y - A x ||_2^2 + tau phi( x ), 
+    arg min_x = 0.5*|| y - A x ||_2^2 + \tau \phi( x ), 
 
-where A is a generic matrix and phi(.) is a regularizarion 
+where :math:`A` is a generic matrix and :math:`phi()` is a regularizarion 
 function  such that the solution of the denoising problem 
 
 .. math::
 
-    Psi_tau(y) = arg min_x = 0.5*|| y - x ||_2^2 + tau \phi( x ), 
+    \Psi_{\tau}(y) = arg min_x = 0.5*|| y - x ||_2^2 + \tau \phi( x ), 
 
 is known. 
 
@@ -33,7 +28,6 @@ and
     Algorithm for Compressive Sensing and Other Ill-Posed 
     Inverse Problems", submitted, 2007.
 
------------------------------------------------------------------------
 The python implementation is based on the Matlab implemebtation
 of TWIST.
 Copyright (2007): Jose Bioucas-Dias and Mario Figueiredo
@@ -50,59 +44,72 @@ This software is being provided "as is", without any express or
 implied warranty.  In particular, the authors do not make any
 representation or warranty of any kind concerning the merchantability
 of this software or its fitness for any particular purpose.
------------------------------------------------------------------------
 
 .. codeauthor:: Amit Aides <amitibo@tx.technion.ac.il>
 
 """
-
 from __future__ import division
 import numpy as np
 from ..utilities import *
+from .base import algorithmBase
 import time
 
 EPS = np.finfo(float).eps
 
-def TwIST(
-        y,
-        A,
-        tau,
-        psi_function=None,
-        phi_function=None,
-        lam1=1e-4,
-        alpha=0,
-        beta=0,
-        AT=None,
-        stop_criterion=1,
-        tolA=0.01,
-        debias=0,
-        tolD=0.001,
-        maxiter=1000,
-        miniter=5,
-        maxiter_debias=200,
-        miniter_debias=5,
-        init=0,
-        enforce_monotone=True,
-        sparse=True,
-        true_x=None,
-        verbose=True
-        ):
-    """
+
+def TwIST_raw(
+    y,
+    A,
+    tau,
+    psi_function=None,
+    phi_function=None,
+    lam1=1e-4,
+    alpha=0,
+    beta=0,
+    AT=None,
+    stop_criterion=1,
+    tolA=0.01,
+    debias=0,
+    tolD=0.001,
+    maxiter=1000,
+    miniter=5,
+    maxiter_debias=200,
+    miniter_debias=5,
+    init=0,
+    enforce_monotone=True,
+    sparse=True,
+    true_x=None,
+    verbose=True
+    ):
+    """Two-step Iterative Shrinkage/Thresholding Algorithm for Linear Inverse Problems.
     Solves the regularization problem 
     
     .. math::
     
-        arg min_x = 0.5*|| y - A x ||_2^2 + tau phi( x ), 
+        arg min_x = 0.5*|| y - A x ||_2^2 + \tau \phi( x ), 
     
-    where A is a generic matrix and phi(.) is a regularizarion 
+    where :math:`A` is a generic matrix and :math:`phi()` is a regularizarion 
     function  such that the solution of the denoising problem 
     
     .. math::
     
-        Psi_tau(y) = arg min_x = 0.5*|| y - x ||_2^2 + tau \phi( x ), 
+        \Psi_{\tau}(y) = arg min_x = 0.5*|| y - x ||_2^2 + \tau \phi( x ), 
     
     is known. 
     
+    For further details about the TwIST algorithm, see the paper:
+    
+    .. [1]
+        J. Bioucas-Dias and M. Figueiredo, "A New TwIST: Two-Step
+        Iterative Shrinkage/Thresholding Algorithms for Image 
+        Restoration",  IEEE Transactions on Image processing, 2007.
+    
+    and
+    
+    .. [2]
+    J. Bioucas-Dias and M. Figueiredo, "A Monotonic Two-Step 
+    Algorithm for Compressive Sensing and Other Ill-Posed 
+    Inverse Problems", submitted, 2007.
     Parameters
     ----------
     
@@ -130,7 +137,7 @@ def TwIST(
     
     phi_function : function handle, optional
         handle to regularizer needed to compute the objective function.
-        (the default = ||x||_1)
+        (the default = :math:`||x||_1`)
     
     lam1 : float, optional (default=0.04)
        parameter of the  TwIST algorithm:
@@ -154,7 +161,7 @@ def TwIST(
               
                   min_x = 0.5*|| (y/c) - (A/c) x ||_2^2 + (tau/c^2) \phi( x ), 
     
-              where c > 0 ensures that  max eigenvalue of ::math:`(A^TA/c^2) \leq 1`.
+              where :math:`c > 0` ensures that  max eigenvalue of ::math:`(A^TA/c^2) \leq 1`.
     
     alpha : float, optional (default=calculated as function of lam1)
         parameter alpha of TwIST (see ex. (22) of the paper)         
@@ -229,7 +236,7 @@ def TwIST(
     
     sparse : bool, optional (default=True)
         Accelarates the convergence rate when the regularizer 
-        Phi(x) is sparse inducing, such as ::math:`||x||_1`.
+        :math:`\Phi(x)` is sparse inducing, such as ::math:`||x||_1`.
                   
     true_x : array, optional (default=None)
         if the true underlying x is passed in this argument,
@@ -301,7 +308,7 @@ def TwIST(
     # if A is a function handle, we have to check presence of AT
     #
     if isFunction(A) and not isFunction(AT):
-        raise Exception('The function handle for transpose of A is missing')
+        raise Exception('The function handle for the transpose of A is missing')
     
     #
     # if A is a matrix, we find out dimensions of y and x,
@@ -310,7 +317,7 @@ def TwIST(
     # the handle/not-handle cases
     #
     if not isFunction(A):
-        AT = lambda x: np.zeros(y.shape)
+        AT = lambda x: np.dot(A.T, x.reshape((-1, 1))).reshape(y.shape)
         A = lambda x: np.dot(A, x.reshape((-1, 1))).reshape(y.shape)
     
     #
@@ -397,7 +404,7 @@ def TwIST(
     #
     nz_x = x != 0
     num_nz_x = np.sum(nz_x)
-    
+
     #
     # Compute and store initial value of the objective function
     #
@@ -698,4 +705,192 @@ def TwIST(
         mses = np.array(mses) / true_x.size
     
     return x, x_debias, objective, times, debias_start, mses, max_svd
+    
 
+class TwIST(algorithmBase):
+    """Two-step Iterative Shrinkage/Thresholding Algorithm for Linear Inverse Problems.
+    Solves the regularization problem 
+    
+    .. math::
+    
+        arg min_x = 0.5*|| y - A x ||_2^2 + \tau \phi( x ), 
+    
+    where :math:`A` is a generic matrix and :math:`phi()` is a regularizarion 
+    function  such that the solution of the denoising problem 
+    
+    .. math::
+    
+        \Psi_{\tau}(y) = arg min_x = 0.5*|| y - x ||_2^2 + \tau \phi( x ), 
+    
+    is known. 
+    
+    For further details about the TwIST algorithm, see the paper:
+    
+    .. [1]
+        J. Bioucas-Dias and M. Figueiredo, "A New TwIST: Two-Step
+        Iterative Shrinkage/Thresholding Algorithms for Image 
+        Restoration",  IEEE Transactions on Image processing, 2007.
+    
+    and
+    
+    .. [2]
+        J. Bioucas-Dias and M. Figueiredo, "A Monotonic Two-Step 
+        Algorithm for Compressive Sensing and Other Ill-Posed 
+        Inverse Problems", submitted, 2007.
+    """
+    def __init__(
+        self,
+        P,
+        tau,
+        psi_function=None,
+        phi_function=None,
+        lam1=1e-4,
+        alpha=0,
+        beta=0,
+        stop_criterion=1,
+        tolA=0.01,
+        debias=0,
+        tolD=0.001,
+        maxiter=1000,
+        miniter=5,
+        maxiter_debias=200,
+        miniter_debias=5,
+        enforce_monotone=True,
+        sparse=True,
+        verbose=True
+        ):
+        """
+        Parameters
+        ----------
+        
+        P : instance of a subclass of problemBase
+            The problem that the algorithm solves.
+       
+        tau : float,
+            regularization parameter, usually a non-negative real
+            parameter of the objective function (see above).
+         
+        psi_function : function handle, optional 
+            handle to denoising function (the default is soft threshold)
+        
+        phi_function : function handle, optional
+            handle to regularizer needed to compute the objective function.
+            (the default = :math:`||x||_1`)
+        
+        lam1 : float, optional (default=0.04)
+           parameter of the  TwIST algorithm:
+           Optimal choice: lam1 = min eigenvalue of ::math:`A^T*A`.
+           If min eigenvalue of :math:`A^T*A = 0`, or unknwon,  
+           set lam1 to a value much smaller than 1.
+           Rule of Thumb:
+           
+           * lam1=1e-4 for severyly ill-conditioned problems
+           * lam1=1e-2 for mildly  ill-conditioned problems
+           * lam1=1    for A unitary direct operators    
+        
+           .. note:: If (max eigenvalue of ::math:`A^T*A`) > 1,
+                  the algorithm may diverge. This is  be avoided 
+                  by taking one of the follwoing  measures:
+        
+                  1. Set enforce_monotone=True (default)
+                  2. Solve the equivalenve minimization problem
+        
+                  .. math:
+                  
+                      min_x = 0.5*|| (y/c) - (A/c) x ||_2^2 + (tau/c^2) \phi( x ), 
+        
+                  where :math:`c > 0` ensures that  max eigenvalue of ::math:`(A^TA/c^2) \leq 1`.
+        
+        alpha : float, optional (default=calculated as function of lam1)
+            parameter alpha of TwIST (see ex. (22) of the paper)         
+          
+        beta : float, optional (default=calculated as function of lam1)
+            parameter beta of twist (see ex. (23) of the paper)
+        
+        stop_criterion : {0, 1, 2, 3}, optional (default=0)
+            type of stopping criterion to use
+                0 = algorithm stops when the relative 
+                    change in the number of non-zero 
+                    components of the estimate falls 
+                    below tolA
+                1 = stop when the relative 
+                    change in the objective function 
+                    falls below tolA
+                2 = stop when the relative norm of the difference between 
+                    two consecutive estimates falls below toleranceA
+                3 = stop when the objective function 
+                    becomes equal or less than toleranceA.
+        
+        tolA : float, optional (default=0.01)
+            stopping threshold.
+        
+        debias : bool, optional (default=False)
+            debiasing option
+            
+            .. note:: Debiasing is an operation aimed at the 
+                computing the solution of the LS problem 
+    
+                .. math::
+                  
+                    arg min_x = 0.5*|| y - A^T x ||_2^2 
+        
+                where ::math:`A^T` is the  submatrix of A obatained by
+                deleting the columns of A corresponding of components
+                of x set to zero by the TwIST algorithm
+                        
+        
+        tolD : float, optional (default=0.0001)
+            stopping threshold for the debiasing phase.
+            If no debiasing takes place, this parameter, is ignored.
+        
+        maxiter : int, optional (default=1000)
+            maximum number of iterations allowed in the
+            main phase of the algorithm.
+        
+        miniter : int, optional (default=5)
+            minimum number of iterations performed in the
+            main phase of the algorithm.
+        
+        maxiter_debias : int, optional (default=5)
+            maximum number of iterations allowed in the
+            debising phase of the algorithm.
+        
+        miniter_debias : int, optional (default=5)
+            minimum number of iterations to perform in the
+            debiasing phase of the algorithm.
+        
+        enforce_monotone : bool, optional (default=True)
+            enforce monotonic decrease in f. 
+        
+        sparse : bool, optional (default=True)
+            Accelarates the convergence rate when the regularizer 
+            :math:`\Phi(x)` is sparse inducing, such as ::math:`||x||_1`.
+                      
+        Verbose : bool, optional (default=False)
+            work silently (False) or verbosely (True) (default 
+        """
+        
+        super(TwIST, self).__init__('TwIST', P)
+
+        #
+        # Copy all params of algorithm to self
+        #
+        self._params = ({i:j for i, j in locals().items() if i not in ('self', 'P')})
+        self.__dict__.update(self._params)
+
+    def _solve(self, x_init=None):
+
+        if x_init == None:
+            x_init = 0
+        
+        x, dummy, self._objectives, self._times, dummy, self._mses, dummy = TwIST_raw(
+            self.P.b,
+            self.P.A,
+            AT=self.P.A.T,
+            true_x=self.P.x0,
+            init=x_init,
+            **self._params
+            )
+
+        return x
+        

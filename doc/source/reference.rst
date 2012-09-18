@@ -42,4 +42,11 @@ uses.
 
 .. automodule:: compsense.algorithms
 
-.. autofunction:: compsense.algorithms.TwIST
+.. autoclass:: compsense.algorithms.algorithmBase
+   :members:
+   :private-members:
+
+.. autoclass:: compsense.algorithms.TwIST
+   :members:
+
+.. autofunction:: compsense.algorithms.TwIST_raw
