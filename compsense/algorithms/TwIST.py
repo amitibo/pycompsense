@@ -377,7 +377,7 @@ def TwIST_raw(
     #
     compute_mse = False
     plot_ISNR = False
-    if true_x != None:
+    if true_x:
         if true_x.size != x.size:
             raise Exception('Initial x has incompatible size')
         compute_mse = True

@@ -14,6 +14,7 @@ uses.
    :toctree: generated/
 
    compsense.operators.opBase
+   compsense.operators.opMatrix
    compsense.operators.opBlur
    compsense.operators.opWavelet
    compsense.operators.opDirac
@@ -28,6 +29,7 @@ uses.
 
    compsense.problems.problemBase
    compsense.problems.problemBase.reconstruct
+   compsense.problems.probCustom
    compsense.problems.prob701
 
 

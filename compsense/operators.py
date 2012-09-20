@@ -163,6 +163,44 @@ class opBase(object):
         return self._apply(x).reshape(self.out_signal_shape)
     
     
+class opMatrix(opBase):
+    """
+    Operator that wraps a simple matrix.
+    """
+
+    def __init__(self, A):
+        """
+        Parameters
+        ----------
+        A : array like, [m, n]
+            Matrix of dimension m, n.
+        """
+        
+        try:
+            self._A = np.array(A)
+        except:
+            raise Exception('Parameter A must be array like object')
+        
+        assert self._A.ndim == 2, "opMatrix supports only 2D matrices"
+        m, n = self._A.shape
+        
+        super(opMatrix, self).__init__(
+            name='Matrix',
+            shape=(m, n),
+            in_signal_shape=(n, 1),
+            out_signal_shape=(m, 1)
+        )
+
+    def _apply(self, x):
+
+        if not self._conj:
+            y = np.dim(self._A.T, x)
+        else:
+            h = np.dim(self._A, x)
+
+        return y
+        
+
 class opBlur(opBase):
     """
     Two-dimensional blurring operator. creates a blurring operator

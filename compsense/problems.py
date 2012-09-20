@@ -128,30 +128,30 @@ class problemBase(object):
         """Finalize the reconstruction of the problem. Should be called by the constructor.
         """
 
-        if not hasattr(self, '_M') and not hasattr(self, '_B'):
-            raise Exception('At least one of the operator fileds _M or _B is required.')
-
-        #
-        # Define measurement matrix
-        #
-        if not hasattr(self, '_M'):
-            self._M = opDirac(self._B.shape[0])
-            operators = []
-        else:
-            operators = [self._M]
-            
-        #
-        # Define sparsitry bases
-        #
-        if not hasattr(self, '_B'):
-            self._B = opDirac(self._M.shape[1])
-        else:
-            operators.append(self._B)
+        if not hasattr(self, '_A') and not hasattr(self, '_M') and not hasattr(self, '_B'):
+            raise Exception('At least one of the operator fileds _A, _M or _B is required.')
 
         #
         # Define operator A if needed
         #
         if not hasattr(self, '_A'):
+            #
+            # Define measurement matrix
+            #
+            if not hasattr(self, '_M'):
+                self._M = opDirac(self._B.shape[0])
+                operators = []
+            else:
+                operators = [self._M]
+                
+            #
+            # Define sparsitry bases
+            #
+            if not hasattr(self, '_B'):
+                self._B = opDirac(self._M.shape[1])
+            else:
+                operators.append(self._B)
+
             if len(operators) > 1:
                 self._A = opFoG(operators)
             else:
@@ -161,7 +161,7 @@ class problemBase(object):
         # Define empty solution if needed
         #
         if not hasattr(self, '_x0'):
-            self._x0 = []
+            self._x0 = None
 
         #
         # Get the size of the desired signal
@@ -179,6 +179,64 @@ class problemBase(object):
         return y
     
 
+class probCustom(problemBase):
+    """
+    This class allows the user to define his own problem
+    object based on the problem matrices.
+
+    Examples
+    --------
+    >>> m, n = (20, 40)
+    >>> sigma = 0.001
+    >>> A = np.random.randn(m, n)
+    >>> x = np.random.randn(n, 1)
+    >>> x[np.abs(x)<0.5] = 0
+    >>> b = np.dot(A, x) + sigma * np.random.randn(m, 1)
+    >>> P = probCustom(A=A, b=b, x0=x)   # Creates a custom problem.
+
+    """
+
+    def __init__(self, A, b, x0=None, name='custom'):
+        """
+        Parameters
+        ----------
+        A : array or instance of `problemBase` subclass, 
+            Standard deviation of the additive noise.
+        b : array like,
+            Measurments array
+        x0 : array like, optional (default=None)
+            Input signal
+        name : string, optional (default='custom')
+            Name of problem.
+        """
+        
+        if not isinstance(A, opBase):
+            try:
+                A = opMatrix(A)
+            except:
+                raise Exception('The A prameter must be an array or an instance of problemBase')
+        
+        super(probCustom, self).__init__(name=name)
+
+        m, n = A.shape
+        
+        #
+        # Set up the problem
+        #
+        self._A = A
+        self._b = b
+        if x0:
+            self._signal = x0
+            self._x0 = x0
+        else:
+            self._signal_shape = (n, 1)
+        
+        #
+        # Finish up creation of the problem
+        #
+        self._completeOps()
+        
+
 class prob701(problemBase):
     """
     GPSR example: Daubechies basis, blurred Photographer.
@@ -194,11 +252,11 @@ class prob701(problemBase):
 
     References
     ----------
-
-    [FiguNowaWrig:2007] M. Figueiredo, R. Nowak and S.J. Wright,
-      Gradient projection for sparse reconstruction: Application to
-      compressed sensing and other inverse problems, Submitted,
-      2007. See also http://www.lx.it.pt/~mtf/GPSR
+    ..
+        [FiguNowaWrig:2007] M. Figueiredo, R. Nowak and S.J. Wright,
+          Gradient projection for sparse reconstruction: Application to
+          compressed sensing and other inverse problems, Submitted,
+          2007. See also http://www.lx.it.pt/~mtf/GPSR
 
     """
 
@@ -215,7 +273,7 @@ class prob701(problemBase):
         super(prob701, self).__init__(name='blurrycam', noseed=noseed)
 
         #
-        # Parse parameters and set problem name
+        # Parse parameters
         #
         self._sigma = sigma
 
