@@ -378,6 +378,15 @@ class opFoG(opBase):
         )
         self._operators_list = operators_list
 
+    @property
+    def operators_list(self):
+        """The list of operators that make up the opFoG.
+        """
+        if self._conj:
+            return [op.T for op in self._operators_list[::-1]]
+        else:
+            return self._operators_list
+
     def _apply(self, x):
 
         if self._conj:
