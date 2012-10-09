@@ -12,7 +12,7 @@ from setuptools import setup
 
 NAME = 'pycompsense'
 PACKAGE_NAME = 'compsense'
-VERSION = '0.1'
+VERSION = '0.1.1'
 DESCRIPTION = 'A toolbox for compressed sensing and sparse reconstruction algorithms'
 LONG_DESCRIPTION = """
 `pycompsesne` is a toolbox for compressed sensing and sparse reconstruction algorithms.

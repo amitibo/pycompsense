@@ -18,6 +18,7 @@ problems. opBase should be subclassed for creating new operators.
 from __future__ import division
 import numpy as np
 import numpy.fft as npfft
+import scipy.fftpack as spfft
 import rwt
 from rwt import wavelets
 
@@ -276,7 +277,7 @@ class opWavelet(opBase):
         levels : integer, optional (default=5)
             Number of levels in the transformation. Both `m` and `n` must
             be divisible by 2**levels.
-        type : {'min', 'max', 'mid'}, optional
+        type : {'min', 'max', 'mid'}, optional (default='min')
             Indicates what type of solution is desired; 'min' for minimum
             phase, 'max' for maximum phase, and 'mid' for mid-phase
             solutions.
@@ -294,11 +295,11 @@ class opWavelet(opBase):
         family = family.lower()
 
         if family == 'daubechies':
-            self._wavelet = wavelets.daubcqf(filter)[0]
+            self._cl, self._ch, self._rl, self._rh = wavelets.waveletCoeffs('db%d' % filter)
         elif family == 'haar':
-            self._wavelet = rwt.daubcqf(0)[0]
+            self._cl, self._ch, self._rl, self._rh = wavelets.waveletCoeffs('db1')
         else:
-            raise Exception('Wavelet family %s is unknown' % family)
+            self._cl, self._ch, self._rl, self._rh = wavelets.waveletCoeffs(family)
 
         self._level = levels
         
@@ -306,16 +307,109 @@ class opWavelet(opBase):
         
         if self._conj:
             wf = rwt.dwt
+            h0 = self._cl
+            h1 = self._ch
         else:
             wf = rwt.idwt 
+            h0 = self._rl
+            h1 = self._rh
             
         if np.isrealobj(x):
-            y, l = wf(x.reshape(self._in_signal_shape), self._wavelet, self._level)
+            y, l = wf(x.reshape(self._in_signal_shape), h0, h1, self._level)
         else:
-            [y1, l] = wf(x.real.reshape(self._in_signal_shape), self._wavelet, self._level)
-            [y2, l] = wf(x.imag.reshape(self._in_signal_shape), self._wavelet, self._level)
+            [y1, l] = wf(x.real.reshape(self._in_signal_shape), h0, h1, self._level)
+            [y2, l] = wf(x.imag.reshape(self._in_signal_shape), h0, h1, self._level)
             y = y1 + 1j*y2
              
+        y.shape = (-1, 1)
+        return y
+
+
+class opFFT2d(opBase):
+    """Two-dimensional fast Fourier transform (FFT) operator.
+    
+    Create an operator that applies a normalized fourier transform to
+    a 2D input signal.
+    """
+    
+    def __init__(self, shape):
+        """
+        Parameters
+        ==========
+        shape : (m, n)
+            Shape of the 2D input signal.
+        """
+        
+        assert len(shape) == 2, "opFFT2d supports operations on 2D matrices only"
+        size = shape[0] * shape[1]
+        
+        super(opFFT2d, self).__init__(
+            name='FFT2d',
+            shape=(size, size),
+            in_signal_shape=shape
+        )
+
+        self._normalization_coeff = np.sqrt(size)
+        
+    def _apply(self, x):
+        
+        if self._conj:
+            y = npfft.ifft2(x.reshape(self._in_signal_shape)) * self._normalization_coeff
+        else:
+            y = npfft.fft2(x.reshape(self._in_signal_shape)) / self._normalization_coeff
+        
+        y = np.ascontiguousarray(y).reshape((-1, 1))
+        y = np.real_if_close(y, tol=1e6)
+        return y
+
+
+class opDCT(opBase):
+    """Arbitrary dimensional discrete cosine transform (DCT).
+    
+    Create an operator that applies the discrete cosine transform
+    to vectors of arbitray dimension.
+    """
+    
+    def __init__(self, shape, axis=-1):
+        """
+        Parameters
+        ==========
+        shape : list of integers
+            Shape of the input signal.
+        axis : integer, optional (default=-1)
+            Axis along which the dct is computed. If -1 then the
+            transform is multidimensional(default=-1)
+        """
+
+        _shape = [int(i) for i in shape]
+        assert list(shape) == _shape, "shape must be a list of integers"
+        assert axis > -1 or axis < len(shape), "axis must be either -1 or one of the dimension indices"
+        size = np.prod(shape)
+        
+        super(opDCT, self).__init__(
+            name='DCT',
+            shape=(size, size),
+            in_signal_shape=shape
+        )
+        
+        self._axis = axis
+        
+    def _apply(self, x):
+        
+        if self._conj:
+            f = spfft.idct
+        else:
+            f = spfft.dct
+
+        x = x.reshape(self._in_signal_shape)
+        
+        if self._axis == -1:
+            y = x
+            for i in range(x.ndim):
+                y = f(y, axis=i, norm='ortho')
+        else:
+            y = f(x, axis=self._axis, norm='ortho')
+        
         y.shape = (-1, 1)
         return y
 
@@ -463,13 +557,60 @@ class op3DStack(opBase):
         return np.vstack(y)
 
 
-def main():
+def test_DCT():
     """
-    Main Function
+    Test the opDCT operator
     """
 
-    pass
+    from scipy.misc import lena
+    import matplotlib.pyplot as plt
+    from compsense.utilities import softThreshold, hardThreshold
+    
+    img = lena().astype(np.double)
+    img /= img.max()
+    op = opDCT(img.shape)
+    
+    img_conv = op.T(img)
+    img_recon = op(hardThreshold(img_conv, 0.5))
+    
+    plt.figure()
+    plt.gray()
+    plt.imshow(img)
+    plt.figure()
+    plt.imshow(img_conv)
+    plt.figure()
+    plt.imshow(img_recon)
+
+    plt.show()
+
+
+def test_FFT():
+    """
+    Test the opFFT2d operator
+    """
+
+    from scipy.misc import lena
+    import matplotlib.pyplot as plt
+    
+    img = lena().astype(np.double)
+    img /= img.max()
+    op = opFFT2d(img.shape)
+    
+    img_conv = op(img)
+    img_recon = op.T(img_conv)
+    
+    plt.figure()
+    plt.gray()
+    plt.imshow(img)
+    plt.figure()
+    plt.imshow(np.abs(img_conv))
+    plt.figure()
+    plt.imshow(img_recon)
+
+    plt.show()
 
 
 if __name__ == '__main__':
-    main()
+    
+    test_DCT()
+    #test_FFT()

@@ -19,6 +19,8 @@ uses.
    compsense.operators.opWavelet
    compsense.operators.opDirac
    compsense.operators.opFoG
+   compsense.operators.opFFT2d
+   compsense.operators.opDCT
    compsense.operators.op3DStack
 
 
