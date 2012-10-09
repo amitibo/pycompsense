@@ -6,9 +6,6 @@
 Welcome to pycompsense's documentation!
 =======================================
 
-mod:`compsense` Package
------------------------
-
 .. automodule:: compsense.__init__
     :members:
     :undoc-members:
@@ -17,7 +14,7 @@ mod:`compsense` Package
 Contents:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    install
    tutorial
@@ -31,3 +28,10 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+Meta information
+================
+
+.. toctree::
+   :maxdepth: 2
+
+   license

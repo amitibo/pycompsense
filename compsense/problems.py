@@ -267,8 +267,8 @@ class prob701(problemBase):
         sigma : float, optional (default=sqrt(2)/256)
             Standard deviation of the additive noise.
         noseed : bool, optional (default=False)
-             When True, the nitialization of the random number
-             generators is suppressed
+            When True, the initialization of the random number
+            generators is suppressed
         """
         super(prob701, self).__init__(name='blurrycam', noseed=noseed)
 
@@ -290,6 +290,75 @@ class prob701(problemBase):
         self._signal = signal.astype(np.float) / 256
         self._M = opBlur(signal.shape)
         self._B = opWavelet(signal.shape, 'Daubechies', 2)
+        self._b = self._M(self._signal.reshape((-1, 1)))
+        self._b += sigma * np.random.randn(m, n)
+        self._x0 = self._B.T(self._signal)
+        
+        #
+        # Finish up creation of the problem
+        #
+        self._completeOps()
+        
+
+class probMissingPixels(problemBase):
+    """
+    RandomMask example: Wavelet basis, masked Photographer.
+    probMissingPixels creates a problem structure.  The generated signal
+    consists of the 256 by 256 grayscale 'photographer' image. 
+    A random binary mask is applied to the signal creating ~40% missing
+    pixels and a ormally distributed noise with standard deviation
+    SIGMA = 0.0055 is added to the final signal.
+
+    Examples
+    --------
+    >>> P = probMissingPixels()   # Creates the default problem.
+
+    """
+
+    def __init__(
+        self,
+        fill_ratio=0.6,
+        wavelet_family='db2',
+        sigma=np.sqrt(2)/256,
+        noseed=False
+        ):
+        """
+        Parameters
+        ----------
+        fill_ratio : float, optional (default=0.6)
+            Ratio of non zero (1) values in the mask.
+        wavelet_family : str, optional (default='db2')
+            Wavelet to use as saprsifying signal basis. If None,
+            no sprasifying basis is used (dirac operator). 
+        sigma : float, optional (default=sqrt(2)/256)
+            Standard deviation of the additive noise.
+        noseed : bool, optional (default=False)
+            When True, the initialization of the random number
+            generators is suppressed
+        """
+        super(probMissingPixels, self).__init__(name='wavelet missing pixels', noseed=noseed)
+
+        #
+        # Parse parameters
+        #
+        self._sigma = sigma
+
+        #
+        # Set up the data
+        #
+        import matplotlib.pyplot as plt        
+        signal = plt.imread(getResourcePath("/prob701_Camera.tif"))
+        m, n = signal.shape
+
+        #
+        # Set up the problem
+        #
+        self._signal = signal.astype(np.float) / 256
+        self._M = opRandMask(signal.shape, fill_ratio=fill_ratio)
+        if wavelet_family == None:
+            self._B = opDirac(signal.shape)
+        else:
+            self._B = opWavelet(signal.shape, family=wavelet_family)
         self._b = self._M(self._signal.reshape((-1, 1)))
         self._b += sigma * np.random.randn(m, n)
         self._x0 = self._B.T(self._signal)

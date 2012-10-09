@@ -420,14 +420,22 @@ class opDirac(opBase):
     Create an operator whose output signal equals the input signal.
     """
 
-    def __init__(self, n):
+    def __init__(self, shape):
         """
         Parameters
         ==========
-        n : integer
-            Size of the input signal.
+        shape : list of integers
+            Shape of the input signal.
         """
-        super(opDirac, self).__init__(name='Dirac', shape=(n, n))
+
+        if isinstance(shape, (int, long)):
+            shape = [shape]
+            
+        _shape = [int(i) for i in list(shape)]
+        assert list(shape) == _shape, "shape must be a list of integers"
+        size = np.prod(shape)
+
+        super(opDirac, self).__init__(name='Dirac', shape=(size, size), in_signal_shape=shape)
 
     def _apply(self, x):
         
@@ -557,6 +565,47 @@ class op3DStack(opBase):
         return np.vstack(y)
 
 
+class opRandMask(opBase):
+    """Random binary mask.
+    
+    The opRandMask operator creates and applies a random binary mask.
+    """
+
+    def __init__(self, shape, fill_ratio):
+        """
+        Parameters
+        ==========
+        shape : list of integers
+            Shape of the input signal.
+        fill_ratio : float
+            Ratio of non zero (1) values in the mask.
+        """
+
+        _shape = [int(i) for i in shape]
+        assert list(shape) == _shape, "shape must be a list of integers"
+        assert fill_ratio > 0 and fill_ratio < 1, "fill_ratio must be a float in the range (0, 1)"
+        size = np.prod(shape)
+        
+        super(opRandMask, self).__init__(
+            name='RandomMask',
+            shape=(size, size),
+            in_signal_shape=shape
+        )
+        
+        self._mask = np.zeros(shape, dtype=np.bool)
+        indices = np.arange(size)
+        np.random.shuffle(indices)
+        indices = indices[:int(size*fill_ratio)]
+        self._mask.ravel()[indices] = 1
+        
+    def _apply(self, x):
+
+        x.shape = self.in_signal_shape
+        y = x * self._mask
+        y.shape = (-1, 1)
+        return y
+
+
 def test_DCT():
     """
     Test the opDCT operator
@@ -610,7 +659,27 @@ def test_FFT():
     plt.show()
 
 
+def test_RandomMask():
+    """
+    Test the opRandMask operator
+    """
+
+    from scipy.misc import lena
+    import matplotlib.pyplot as plt
+    
+    img = lena().astype(np.double)
+    img /= img.max()
+    op = opRandMask(img.shape, fill_ratio=0.6)
+    
+    img_masked = op(img)
+    
+    plt.figure()
+    plt.gray()
+    plt.imshow(img_masked)
+
+    plt.show()
+
+
 if __name__ == '__main__':
     
-    test_DCT()
-    #test_FFT()
+    test_RandomMask()

@@ -16,6 +16,7 @@ uses.
    compsense.operators.opBase
    compsense.operators.opMatrix
    compsense.operators.opBlur
+   compsense.operators.opRandMask
    compsense.operators.opWavelet
    compsense.operators.opDirac
    compsense.operators.opFoG
@@ -33,6 +34,7 @@ uses.
    compsense.problems.problemBase.reconstruct
    compsense.problems.probCustom
    compsense.problems.prob701
+   compsense.problems.probMissingPixels
 
 
 .. automodule:: compsense.algorithms
