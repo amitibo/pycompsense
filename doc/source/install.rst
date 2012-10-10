@@ -3,17 +3,15 @@
 Installation
 ============
 
-To install cycompsense you will need the following prerequisites:
+To install pycompsense you will need the following prerequisites:
 
-* python 2.6+
-* numpy
+* python (tested on version 2.73)
+* numpy 
 * scipy
 * cython
+* pyrwt >= 0.2
 
-`Python(x,y) <http://code.google.com/p/pythonxy/>`_ is a great way to get all
-of these if you are using windows and satisfied with 32bit.
-
-Download the source files of cycompsense. Then, execute::
+Download the source files of pycompsense. Then, execute::
 
     $ python setup.py install
 

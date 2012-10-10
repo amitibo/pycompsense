@@ -12,10 +12,11 @@ from setuptools import setup
 
 NAME = 'pycompsense'
 PACKAGE_NAME = 'compsense'
+PACKAGES = [PACKAGE_NAME, '%s.algorithms' % PACKAGE_NAME]
 VERSION = '0.1.2'
 DESCRIPTION = 'A toolbox for compressed sensing and sparse reconstruction algorithms'
 LONG_DESCRIPTION = """
-`pycompsesne` is a toolbox for compressed sensing and sparse reconstruction algorithms.
+`pycompsense` is a toolbox for compressed sensing and sparse reconstruction algorithms.
 It is based on `sparco <http://www.cs.ubc.ca/labs/scl/sparco/>`_.
 
 `pycompsense` includes an implementation of `TwIST <http://www.lx.it.pt/~bioucas/TwIST/TwIST.htm>`_.
@@ -45,8 +46,9 @@ def main():
         keywords=KEYWORDS,
         classifiers=CLASSIFIERS,
         license=LICENSE,
-        packages=[PACKAGE_NAME],
+        packages=PACKAGES,
         package_data={PACKAGE_NAME: ['data/*.*']},
+        install_requires=['pyrwt >= 0.2'],
         )
 
 
