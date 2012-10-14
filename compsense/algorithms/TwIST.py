@@ -3,14 +3,14 @@ Solves the regularization problem
 
 .. math::
 
-    arg min_x = 0.5*|| y - A x ||_2^2 + \tau \phi( x ), 
+    arg min_x = 0.5*|| y - A x ||_2^2 + \\tau \phi( x ), 
 
 where :math:`A` is a generic matrix and :math:`phi()` is a regularizarion 
 function  such that the solution of the denoising problem 
 
 .. math::
 
-    \Psi_{\tau}(y) = arg min_x = 0.5*|| y - x ||_2^2 + \tau \phi( x ), 
+    \Psi_{\\tau}(y) = arg min_x = 0.5*|| y - x ||_2^2 + \\tau \phi( x ), 
 
 is known. 
 
@@ -86,27 +86,29 @@ def TwIST_raw(
     
     .. math::
     
-        arg min_x = 0.5*|| y - A x ||_2^2 + \tau \phi( x ), 
+        arg min_x = 0.5*|| y - A x ||_2^2 + \\tau \phi( x ), 
     
     where :math:`A` is a generic matrix and :math:`phi()` is a regularizarion 
     function  such that the solution of the denoising problem 
     
     .. math::
     
-        \Psi_{\tau}(y) = arg min_x = 0.5*|| y - x ||_2^2 + \tau \phi( x ), 
+        \Psi_{\\tau}(y) = arg min_x = 0.5*|| y - x ||_2^2 + \\tau \phi( x ), 
     
     is known. 
     
     For further details about the TwIST algorithm, see the paper:
     
-    .. [1]
+    ::
+    
         J. Bioucas-Dias and M. Figueiredo, "A New TwIST: Two-Step
         Iterative Shrinkage/Thresholding Algorithms for Image 
         Restoration",  IEEE Transactions on Image processing, 2007.
     
     and
     
-    .. [2]
+    ::
+    
         J. Bioucas-Dias and M. Figueiredo, "A Monotonic Two-Step 
         Algorithm for Compressive Sensing and Other Ill-Posed 
         Inverse Problems", submitted, 2007.
@@ -118,16 +120,16 @@ def TwIST_raw(
        1D vector or 2D array (image) of observations.
         
     A : {array, function handle},
-        if y and x are both 1D vectors, :math:`A` can be a 
-        k*n (where k is the size of y and n the size of x)
+        if y and x are both 1D vectors, ``A`` can be a 
+        k*n (where k is the size of ``y`` and n the size of ``x``)
         matrix or a handle to a function that computes
         products of the form :math:`Av`, for some vector v.
-        In any other case (if y and/or x are 2D arrays), 
-        A has to be passed as a handle to a function which computes 
+        In any other case (if ``y`` and/or ``x`` are 2D arrays), 
+        ``A`` has to be passed as a handle to a function which computes 
         products of the form :math:`Ax`; another handle to a function 
-        AT which computes products of the form :math:`A^Tx` is also required 
+        ``AT`` which computes products of the form :math:`A^Tx` is also required 
         in this case. The size of x is determined as the size
-        of the result of applying AT.
+        of the result of applying ``AT``.
    
     tau : float,
         regularization parameter, usually a non-negative real
@@ -142,51 +144,51 @@ def TwIST_raw(
     
     lam1 : float, optional (default=0.04)
        parameter of the  TwIST algorithm:
-       Optimal choice: lam1 = min eigenvalue of ::math:`A^T*A`.
-       If min eigenvalue of :math:`A^T*A = 0`, or unknwon,  
-       set lam1 to a value much smaller than 1.
+       Optimal choice: ``lam1`` = min eigenvalue of ::math:`A^T*A`.
+       If min eigenvalue of :math:`A^T*A` equals 0, or unknwon,  
+       set ``lam1`` to a value much smaller than 1.
        Rule of Thumb:
-       
-       * lam1=1e-4 for severyly ill-conditioned problems
-       * lam1=1e-2 for mildly  ill-conditioned problems
-       * lam1=1    for A unitary direct operators    
+
+       * ``lam1=1e-4`` for severyly ill-conditioned problems
+       * ``lam1=1e-2`` for mildly  ill-conditioned problems
+       * ``lam1=1``    for A unitary direct operators    
     
-       .. note:: If (max eigenvalue of ::math:`A^T*A`) > 1,
-              the algorithm may diverge. This is  be avoided 
+       .. note:: If max eigenvalue of ::math:`A^T*A` > 1,
+              the algorithm may diverge. This is to be avoided 
               by taking one of the follwoing  measures:
     
-              1. Set enforce_monotone=True (default)
+              1. Set ``enforce_monotone=True`` (default)
               2. Solve the equivalenve minimization problem
     
-              .. math:
+              .. math::
               
                   min_x = 0.5*|| (y/c) - (A/c) x ||_2^2 + (tau/c^2) \phi( x ), 
     
               where :math:`c > 0` ensures that  max eigenvalue of ::math:`(A^TA/c^2) \leq 1`.
     
-    alpha : float, optional (default=calculated as function of lam1)
+    alpha : float, optional (default=calculated as function of ``lam1``)
         parameter alpha of TwIST (see ex. (22) of the paper)         
       
-    beta : float, optional (default=calculated as function of lam1)
+    beta : float, optional (default=calculated as function of ``lam1``)
         parameter beta of twist (see ex. (23) of the paper)
     
     AT : function handle, optional
         function that implements the multiplication by the conjugate
-        of A, when A is a function handle. If A is an array, AT is ignored.
+        of ``A``, when ``A`` is a function handle. If ``A`` is an array,
+        ``AT`` is ignored.
     
     stop_criterion : {0, 1, 2, 3}, optional (default=0)
         type of stopping criterion to use
-            0 = algorithm stops when the relative 
-                change in the number of non-zero 
-                components of the estimate falls 
-                below tolA
-            1 = stop when the relative 
-                change in the objective function 
-                falls below tolA
-            2 = stop when the relative norm of the difference between 
-                two consecutive estimates falls below toleranceA
-            3 = stop when the objective function 
-                becomes equal or less than toleranceA.
+        
+        * ``stop_criterion=0`` algorithm stops when the relative 
+          change in the number of non-zero components of the estimate falls 
+          below ``tolA``
+        * ``stop_criterion=1`` stop when the relative 
+          change in the objective function falls below ``tolA``
+        * ``stop_criterion=2`` stop when the relative norm of the difference between 
+          two consecutive estimates falls below ``tolA``
+        * ``stop_criterion=3`` stop when the objective function 
+          becomes equal or less than ``tolA``.
     
     tolA : float, optional (default=0.01)
         stopping threshold.
@@ -201,9 +203,9 @@ def TwIST_raw(
               
                 arg min_x = 0.5*|| y - A^T x ||_2^2 
     
-            where ::math:`A^T` is the  submatrix of A obatained by
-            deleting the columns of A corresponding of components
-            of x set to zero by the TwIST algorithm
+            where ::math:`A^T` is the  submatrix of ``A`` obatained by
+            deleting the columns of ``A ``corresponding of components
+            of ``x`` set to zero by the TwIST algorithm
                     
     
     tolD : float, optional (default=0.0001)
@@ -226,11 +228,13 @@ def TwIST_raw(
         minimum number of iterations to perform in the
         debiasing phase of the algorithm.
     
-    init : {0, 1, 2, array}, optional (default=0)must be one of 
-        0 -> Initialization at zero. 
-        1 -> Random initialization.
-        2 -> initialization with ::math:`A^Ty`.
-        array -> initialization provided by the user.
+    init : {0, 1, 2, array}, optional (default=0)
+        must be one of 
+        
+        * ``init=0`` Initialization at zero. 
+        * ``init=1`` Random initialization.
+        * ``init=2`` initialization with ::math:`A^Ty`.
+        * ``init=array`` initialization provided by the user.
     
     enforce_monotone : bool, optional (default=True)
         enforce monotonic decrease in f. 
@@ -240,11 +244,11 @@ def TwIST_raw(
         :math:`\Phi(x)` is sparse inducing, such as ::math:`||x||_1`.
                   
     true_x : array, optional (default=None)
-        if the true underlying x is passed in this argument,
+        if the true underlying ``x`` is passed in this argument,
         MSE evolution is computed
     
     Verbose : bool, optional (default=False)
-        work silently (False) or verbosely (True) (default 
+        work silently (False) or verbosely (True)
     
 
     Returns
@@ -269,8 +273,8 @@ def TwIST_raw(
         this variable is returned as zero.
     
     mses : array,
-        sequence of MSE values, with respect to true_x,
-        if it was given; if it was not given, mses is [].
+        sequence of MSE values, with respect to ``true_x``,
+        if it was given; if it was not given, ``mses`` is [].
     
     max_svd : float,
         inverse of the scaling factor, determined by TwIST,
@@ -579,7 +583,7 @@ def TwIST_raw(
         if verbose:
             if plot_ISNR:
                 print 'Iteration=%4d, ISNR=%4.5e  objective=%9.5e, nz=%7d, criterion=%7.3e' % \
-                      (iter, 10*np.log10(np.sum((y-true_x)**2)/np.sum((x-true_x)**2)), f, num_nz_x, criterion/tolA)
+                      (iter, 10*np.log10(np.sum((y-A(true_x))**2)/np.sum((x-true_x)**2)), f, num_nz_x, criterion/tolA)
             else:
                 print 'Iteration=%4d, objective=%9.5e, nz=%7d,  criterion=%7.3e' % (iter, f, num_nz_x, criterion/tolA)
     
@@ -674,7 +678,7 @@ def TwIST_raw(
             iter += 1
 
             objective.append(0.5*np.sum(resid * resid) + tau*phi_function(x_debias))
-            times.appebd(time.time() - t0)
+            times.append(time.time() - t0)
 
             if compute_mse:
                 err = true_x - x_debias
@@ -685,7 +689,7 @@ def TwIST_raw(
             # based on the residual (this is standard for CG)
             #
             if verbose:
-                print ' Iter = %5d, debias resid = %13.8e, convergence = %8.3e\n' % \
+                print ' Iter = %5d, debias resid = %13.8e, convergence = %8.3e' % \
                       (iter, np.sum(resid * resid), rTr_cg / tol_debias)
                 
             cont_debias_cg = \
@@ -714,27 +718,29 @@ class TwIST(algorithmBase):
     
     .. math::
     
-        arg min_x = 0.5*|| y - A x ||_2^2 + \tau \phi( x ), 
+        arg min_x = 0.5*|| y - A x ||_2^2 + \\tau \phi( x ), 
     
     where :math:`A` is a generic matrix and :math:`phi()` is a regularizarion 
     function  such that the solution of the denoising problem 
     
     .. math::
     
-        \Psi_{\tau}(y) = arg min_x = 0.5*|| y - x ||_2^2 + \tau \phi( x ), 
+        \Psi_{\\tau}(y) = arg min_x = 0.5*|| y - x ||_2^2 + \\tau \phi( x ), 
     
     is known. 
     
     For further details about the TwIST algorithm, see the paper:
     
-    .. [1]
+    ::
+    
         J. Bioucas-Dias and M. Figueiredo, "A New TwIST: Two-Step
         Iterative Shrinkage/Thresholding Algorithms for Image 
         Restoration",  IEEE Transactions on Image processing, 2007.
     
     and
     
-    .. [2]
+    ::
+    
         J. Bioucas-Dias and M. Figueiredo, "A Monotonic Two-Step 
         Algorithm for Compressive Sensing and Other Ill-Posed 
         Inverse Problems", submitted, 2007.
@@ -750,7 +756,7 @@ class TwIST(algorithmBase):
         beta=0,
         stop_criterion=1,
         tolA=0.01,
-        debias=0,
+        debias=False,
         tolD=0.001,
         maxiter=1000,
         miniter=5,
@@ -779,48 +785,47 @@ class TwIST(algorithmBase):
             (the default = :math:`||x||_1`)
         
         lam1 : float, optional (default=0.04)
-           parameter of the  TwIST algorithm:
-           Optimal choice: lam1 = min eigenvalue of ::math:`A^T*A`.
-           If min eigenvalue of :math:`A^T*A = 0`, or unknwon,  
-           set lam1 to a value much smaller than 1.
-           Rule of Thumb:
-           
-           * lam1=1e-4 for severyly ill-conditioned problems
-           * lam1=1e-2 for mildly  ill-conditioned problems
-           * lam1=1    for A unitary direct operators    
-        
-           .. note:: If (max eigenvalue of ::math:`A^T*A`) > 1,
-                  the algorithm may diverge. This is  be avoided 
-                  by taking one of the follwoing  measures:
-        
-                  1. Set enforce_monotone=True (default)
-                  2. Solve the equivalenve minimization problem
-        
-                  .. math:
-                  
-                      min_x = 0.5*|| (y/c) - (A/c) x ||_2^2 + (tau/c^2) \phi( x ), 
-        
-                  where :math:`c > 0` ensures that  max eigenvalue of ::math:`(A^TA/c^2) \leq 1`.
-        
-        alpha : float, optional (default=calculated as function of lam1)
+            parameter of the  TwIST algorithm:
+            Optimal choice: ``lam1`` = min eigenvalue of ::math:`A^T*A`.
+            If min eigenvalue of :math:`A^T*A` equals 0, or unknwon,  
+            set ``lam1`` to a value much smaller than 1.
+            Rule of Thumb:
+     
+            * ``lam1=1e-4`` for severyly ill-conditioned problems
+            * ``lam1=1e-2`` for mildly  ill-conditioned problems
+            * ``lam1=1``    for A unitary direct operators    
+         
+            .. note:: If max eigenvalue of ::math:`A^T*A` > 1,
+                   the algorithm may diverge. This is to be avoided 
+                   by taking one of the follwoing  measures:
+         
+                   1. Set ``enforce_monotone=True`` (default)
+                   2. Solve the equivalenve minimization problem
+         
+                   .. math::
+                   
+                       min_x = 0.5*|| (y/c) - (A/c) x ||_2^2 + (tau/c^2) \phi( x ), 
+         
+                   where :math:`c > 0` ensures that  max eigenvalue of ::math:`(A^TA/c^2) \leq 1`.
+         
+        alpha : float, optional (default=calculated as function of ``lam1``)
             parameter alpha of TwIST (see ex. (22) of the paper)         
           
-        beta : float, optional (default=calculated as function of lam1)
+        beta : float, optional (default=calculated as function of ``lam1``)
             parameter beta of twist (see ex. (23) of the paper)
         
         stop_criterion : {0, 1, 2, 3}, optional (default=0)
             type of stopping criterion to use
-                0 = algorithm stops when the relative 
-                    change in the number of non-zero 
-                    components of the estimate falls 
-                    below tolA
-                1 = stop when the relative 
-                    change in the objective function 
-                    falls below tolA
-                2 = stop when the relative norm of the difference between 
-                    two consecutive estimates falls below toleranceA
-                3 = stop when the objective function 
-                    becomes equal or less than toleranceA.
+            
+            * ``stop_criterion=0`` algorithm stops when the relative 
+              change in the number of non-zero components of the estimate falls 
+              below ``tolA``
+            * ``stop_criterion=1`` stop when the relative 
+              change in the objective function falls below ``tolA``
+            * ``stop_criterion=2`` stop when the relative norm of the difference between 
+              two consecutive estimates falls below ``tolA``
+            * ``stop_criterion=3`` stop when the objective function 
+              becomes equal or less than ``tolA``.
         
         tolA : float, optional (default=0.01)
             stopping threshold.
@@ -835,9 +840,9 @@ class TwIST(algorithmBase):
                   
                     arg min_x = 0.5*|| y - A^T x ||_2^2 
         
-                where ::math:`A^T` is the  submatrix of A obatained by
-                deleting the columns of A corresponding of components
-                of x set to zero by the TwIST algorithm
+                where ::math:`A^T` is the  submatrix of ``A`` obatained by
+                deleting the columns of ``A`` corresponding of components
+                of ``x`` set to zero by the TwIST algorithm
                         
         
         tolD : float, optional (default=0.0001)
@@ -868,7 +873,7 @@ class TwIST(algorithmBase):
             :math:`\Phi(x)` is sparse inducing, such as ::math:`||x||_1`.
                       
         Verbose : bool, optional (default=False)
-            work silently (False) or verbosely (True) (default 
+            work silently (False) or verbosely (True)
         """
         
         super(TwIST, self).__init__('TwIST', P)
@@ -884,7 +889,7 @@ class TwIST(algorithmBase):
         if x_init == None:
             x_init = 0
         
-        x, dummy, self._objectives, self._times, dummy, self._mses, dummy = TwIST_raw(
+        x, x_debias, self._objectives, self._times, self.debias_start, self._mses, dummy = TwIST_raw(
             self.P.b,
             self.P.A,
             AT=self.P.A.T,
@@ -893,5 +898,8 @@ class TwIST(algorithmBase):
             **self._params
             )
 
+        if self._params['debias']:
+            return x_debias
+        
         return x
         

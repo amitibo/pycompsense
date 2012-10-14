@@ -19,7 +19,7 @@ Restoration",  IEEE Transactions on Image processing, 2007.
 (available at   http://www.lx.it.pt/~bioucas/publications.html)
 
 
-Authors: Jose Bioucas-Dias and Mario Figueiredo, 
+Authors of original Matlab demo Jose Bioucas-Dias and Mario Figueiredo, 
 Instituto Superior Tecnico, October, 2007
 """
 
@@ -31,9 +31,7 @@ import matplotlib.cm as cm
 import compsense
 
 
-PROFILE = False
-
-def main(plot_results=False):
+def main():
     """
     Main Function
     """
@@ -41,7 +39,7 @@ def main(plot_results=False):
     #
     # Generate environment
     #
-    P = compsense.problems.prob701(sigma=1e-3)
+    P = compsense.problems.prob701(sigma=1e-3, undecimated=False)
   
     #
     # Regularization parameter
@@ -67,9 +65,6 @@ def main(plot_results=False):
     #
     y  = P.reconstruct(x)
 
-    if not plot_results:
-        return
-    
     #
     # Show results
     #
@@ -100,17 +95,5 @@ def main(plot_results=False):
     plt.show()
 
     
-if __name__ == '__main__':
-    
-    if PROFILE:
-        import hotshot, hotshot.stats
-        
-        prof = hotshot.Profile("stones.prof")
-        prof.runcall(main)
-        prof.close()
-        stats = hotshot.stats.load("stones.prof")
-        stats.strip_dirs()
-        stats.sort_stats('time', 'calls')
-        stats.print_stats(20)
-    else:
-        main(True)
+if __name__ == '__main__':    
+    main(True)

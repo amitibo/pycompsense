@@ -194,10 +194,10 @@ class opMatrix(opBase):
 
     def _apply(self, x):
 
-        if not self._conj:
-            y = np.dim(self._A.T, x)
+        if self._conj:
+            y = np.dot(self._A.T, x)
         else:
-            h = np.dim(self._A, x)
+            y = np.dot(self._A, x)
 
         return y
         
@@ -264,61 +264,114 @@ class opWavelet(opBase):
     a 2D input signal.
     """
     
-    def __init__(self, shape, family='Daubechies', filter=8, levels=5, type='min'):
+    def __init__(self, shape, name='haar', levels=None, undecimated=False):
         """
         Parameters
         ==========
         shape : (m, n)
             Shape of the 2D input signal.
-        family : {'Daubechies', 'haar'}, optional
-            The family of the wavelet.
-        filter : integer, optional (default=8)
-            Length of the wavelet filter.
-        levels : integer, optional (default=5)
+        name : str, optional
+            Name of wavelet. Supported values:
+                * '**haar**' : Haar wavelet
+                * '**db1**'-'**db20**' : Daubechie wavelets with different support size
+                * '**sym1**'-'**sym20**' : Symlets wavelets with different support size
+                * '**coif1**'-'**coif5**' : Coiflets wavelets with different support size
+                * '**bior1.{1,3,5}**', '**bior2.{2,4,6,8}**', '**bior3.{1,3,5,7}**', '**bior4.4**', '**bior5.5**', '**bior6.8**': Biorthogonal wavelets with different support size
+                * '**dmey**' : Discrete Meyer wavelet
+        levels : integer, optional (default=None)
             Number of levels in the transformation. Both `m` and `n` must
-            be divisible by 2**levels.
-        type : {'min', 'max', 'mid'}, optional (default='min')
-            Indicates what type of solution is desired; 'min' for minimum
-            phase, 'max' for maximum phase, and 'mid' for mid-phase
-            solutions.
+            be divisible by 2**levels. If ``None`` then the number of levels
+            is calculated automatically.
+        undecimated : boolean, optional (default=False)
+            Indicates wether to use the standard or the undecimated transform:
+                * True - standard transform
+                * False - undecimated
         """
         
         assert len(shape) == 2, "opWavelet supports operations on 2D matrices only"
-        size = shape[0] * shape[1]
         
+        if levels == None:
+            #
+            # Calculate the maximal level according
+            # to signal size
+            #
+            m, n = shape
+            i = n
+            j = 0
+            while i % 2 == 0:
+                i >>= 1
+                j += 1
+    
+            levels = m
+            i = 0
+            while levels % 2 == 0:
+                levels >>= 1
+                i += 1
+                
+            if min(m, n) == 1:
+                levels = max(i, j)
+            else:
+                levels = min(i, j)
+
+        size_out = shape[0] * shape[1]
+        if undecimated:
+            shape_in = (shape[0], shape[1]*(1+3*levels))
+        else:
+            shape_in = shape
+        size_in = shape_in[0] * shape_in[1]
+
         super(opWavelet, self).__init__(
             name='Wavelet',
-            shape=(size, size),
-            in_signal_shape=shape
+            shape=(size_out, size_in),
+            in_signal_shape=shape_in,
+            out_signal_shape=shape
         )
         
-        family = family.lower()
+        cl, ch, rl, rh = wavelets.waveletCoeffs(name)
 
-        if family == 'daubechies':
-            self._cl, self._ch, self._rl, self._rh = wavelets.waveletCoeffs('db%d' % filter)
-        elif family == 'haar':
-            self._cl, self._ch, self._rl, self._rh = wavelets.waveletCoeffs('db1')
+        if undecimated:
+            w = shape[1]
+            def iwrap(x):
+                x = x.reshape(self._in_signal_shape)
+                xl = x[:, :w]
+                xh = x[:, w:]
+                y, l = rwt.irdwt(xl, xh, rl, rh, levels)
+                return y
+            
+            def wrap(x):
+                x = x.reshape(self._out_signal_shape)
+                yl, yh, l = rwt.rdwt(x, cl, ch, levels)
+                #
+                # The order parameter is used to force a contigous
+                # array.
+                #
+                return np.array(np.hstack((yl, yh)), order='C')
         else:
-            self._cl, self._ch, self._rl, self._rh = wavelets.waveletCoeffs(family)
+            def iwrap(x):
+                x = x.reshape(self._in_signal_shape)
+                y, l = rwt.idwt(x, rl, rh, levels)
+                return y
+            
+            def wrap(x):
+                x = x.reshape(self._out_signal_shape)
+                y, l = rwt.dwt(x, cl, ch, levels)
+                return y
 
-        self._level = levels
+        self._idwt = iwrap
+        self._dwt = wrap
         
     def _apply(self, x):
         
         if self._conj:
-            wf = rwt.dwt
-            h0 = self._cl
-            h1 = self._ch
+            wf = self._dwt
         else:
-            wf = rwt.idwt 
-            h0 = self._rl
-            h1 = self._rh
+            wf = self._idwt
             
         if np.isrealobj(x):
-            y, l = wf(x.reshape(self._in_signal_shape), h0, h1, self._level)
+            y = wf(x)
         else:
-            [y1, l] = wf(x.real.reshape(self._in_signal_shape), h0, h1, self._level)
-            [y2, l] = wf(x.imag.reshape(self._in_signal_shape), h0, h1, self._level)
+            y1 = wf(x.real)
+            y2 = wf(x.imag)
             y = y1 + 1j*y2
              
         y.shape = (-1, 1)

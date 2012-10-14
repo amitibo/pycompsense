@@ -225,7 +225,7 @@ class probCustom(problemBase):
         #
         self._A = A
         self._b = b
-        if x0:
+        if x0 != None:
             self._signal = x0
             self._x0 = x0
         else:
@@ -260,12 +260,14 @@ class prob701(problemBase):
 
     """
 
-    def __init__(self, sigma=np.sqrt(2)/256, noseed=False):
+    def __init__(self, sigma=np.sqrt(2)/256, undecimated=False, noseed=False):
         """
         Parameters
         ----------
         sigma : float, optional (default=sqrt(2)/256)
             Standard deviation of the additive noise.
+        undecimated : bool, optional (default=False)
+            Use undecimated wavelet transform
         noseed : bool, optional (default=False)
             When True, the initialization of the random number
             generators is suppressed
@@ -289,7 +291,7 @@ class prob701(problemBase):
         #
         self._signal = signal.astype(np.float) / 256
         self._M = opBlur(signal.shape)
-        self._B = opWavelet(signal.shape, 'Daubechies', 2)
+        self._B = opWavelet(signal.shape, name='db2', undecimated=undecimated)
         self._b = self._M(self._signal.reshape((-1, 1)))
         self._b += sigma * np.random.randn(m, n)
         self._x0 = self._B.T(self._signal)
@@ -318,8 +320,10 @@ class probMissingPixels(problemBase):
     def __init__(
         self,
         fill_ratio=0.6,
-        wavelet_family='db2',
         sigma=np.sqrt(2)/256,
+        wavelet='db2',
+        undecimated=False,
+        wavelet_levels=None,
         noseed=False
         ):
         """
@@ -327,11 +331,16 @@ class probMissingPixels(problemBase):
         ----------
         fill_ratio : float, optional (default=0.6)
             Ratio of non zero (1) values in the mask.
-        wavelet_family : str, optional (default='db2')
-            Wavelet to use as saprsifying signal basis. If None,
-            no sprasifying basis is used (dirac operator). 
         sigma : float, optional (default=sqrt(2)/256)
             Standard deviation of the additive noise.
+        wavelet : str, optional (default='db2')
+            Wavelet to use as saprsifying signal basis. If None,
+            no sprasifying basis is used (dirac operator).
+        undecimated : bool, optional (default=False)
+            Use undecimated wavelet transform
+        wavelet_levels : int, optional (default=None)
+            Number of scaling levels used in the wavelet transform. If None,
+            maximum possible number is used
         noseed : bool, optional (default=False)
             When True, the initialization of the random number
             generators is suppressed
@@ -355,10 +364,10 @@ class probMissingPixels(problemBase):
         #
         self._signal = signal.astype(np.float) / 256
         self._M = opRandMask(signal.shape, fill_ratio=fill_ratio)
-        if wavelet_family == None:
+        if wavelet == None:
             self._B = opDirac(signal.shape)
         else:
-            self._B = opWavelet(signal.shape, family=wavelet_family)
+            self._B = opWavelet(signal.shape, name=wavelet, levels=wavelet_levels, undecimated=undecimated)
         self._b = self._M(self._signal.reshape((-1, 1)))
         self._b += sigma * np.random.randn(m, n)
         self._x0 = self._B.T(self._signal)
